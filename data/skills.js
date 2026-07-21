@@ -4,7 +4,10 @@ window.SKILLS = {
     attackStat: "eatk", element: "wind", weaponType: null, power: 65, hits: 3,
     boostPower: {0: 65, 1: 75, 2: 90, 3: 110}, capMultiplier: 1,
     effects: [
-      { type: "followUp", value: 1, timing: "after", label: "行動後に風追撃を付与（表示のみ）" }
+      {
+        type: "followUp", value: 1, timing: "after", targetLabel: "自身", label: "行動後に風追撃を付与（表示のみ）",
+        duration: {0: 2, 1: 3, 2: 4, 3: 5}
+      }
     ]
   },
   yuna_ray: {
@@ -12,7 +15,10 @@ window.SKILLS = {
     attackStat: "eatk", element: "light", weaponType: null, power: 45, hits: 4,
     boostPower: {0: 45, 1: 55, 2: 70, 3: 90}, capMultiplier: 1,
     effects: [
-      { type: "attackBuff", target: "eatk", value: 15, timing: "after", label: "自身に属攻アップ15%" }
+      {
+        type: "attackBuff", target: "eatk", targetLabel: "自身", value: 15, timing: "after", label: "自身に属攻アップ15%",
+        duration: {0: 2, 1: 3, 2: 4, 3: 5}
+      }
     ]
   },
   yuna_bahamut: {
@@ -31,9 +37,9 @@ window.SKILLS = {
       includeBreakByThisSkill: true
     },
     effects: [
-      { type: "multiWeakness", timing: "current", label: "火・氷・雷・風・光・闇弱点を突ける（計算属性は火）" },
-      { type: "ignoreDefenseEffects", timing: "current", label: "完全回避・完全防御を無視" },
-      { type: "repeatSameSkill", timing: "conditional", label: "BP MAX＋ブレイク時に同じ攻撃を再発動（この技でブレイクした場合も含む）" }
+      { type: "multiWeakness", timing: "current", targetLabel: "敵全体", label: "火・氷・雷・風・光・闇弱点を突ける（計算属性は火）", duration: null },
+      { type: "ignoreDefenseEffects", timing: "current", targetLabel: "敵全体", label: "完全回避・完全防御を無視", duration: null },
+      { type: "repeatSameSkill", timing: "conditional", targetLabel: "自身", label: "BP MAX＋ブレイク時に同じ攻撃を再発動（この技でブレイクした場合も含む）", duration: null }
     ]
   },
   yuna_special: {
@@ -41,8 +47,14 @@ window.SKILLS = {
     attackStat: "eatk", element: "light", weaponType: null, power: 500, hits: 1,
     boostPower: {0: 500, 1: 500, 2: 500, 3: 500}, capMultiplier: 1,
     effects: [
-      { type: "attackBuff", target: "eatk", value: 20, timing: "after", label: "味方全体に属攻アップ20%" },
-      { type: "capBonus", value: 100000, timing: "after", label: "味方全体にダメージ上限+100,000" }
+      {
+        type: "attackBuff", target: "eatk", targetLabel: "味方全体", value: 20, timing: "after", label: "味方全体に属攻アップ20%",
+        duration: {0: 2, 1: 2, 2: 2, 3: 2}
+      },
+      {
+        type: "capBonus", value: 100000, targetLabel: "味方全体", timing: "after", label: "味方全体にダメージ上限+100,000",
+        duration: {0: 2, 1: 2, 2: 2, 3: 2}
+      }
     ]
   },
   tidus_spiral: {
@@ -56,7 +68,10 @@ window.SKILLS = {
     attackStat: "patk", element: "water", weaponType: "sword", power: 45, hits: 5,
     boostPower: {0: 45, 1: 55, 2: 65, 3: 80}, capMultiplier: 1,
     effects: [
-      { type: "attackBuff", target: "patk", value: 15, timing: "after", label: "自身に物攻アップ15%" }
+      {
+        type: "attackBuff", target: "patk", targetLabel: "自身", value: 15, timing: "after", label: "自身に物攻アップ15%",
+        duration: {0: 2, 1: 3, 2: 4, 3: 5}
+      }
     ]
   },
   tidus_blitz: {
@@ -76,7 +91,10 @@ window.SKILLS = {
     attackStat: "patk", element: "none", weaponType: "dagger", power: 55, hits: 4,
     boostPower: {0: 55, 1: 65, 2: 80, 3: 100}, capMultiplier: 1,
     effects: [
-      { type: "defenseDebuff", target: "pdef", value: 15, timing: "after", label: "敵に物防ダウン15%" }
+      {
+        type: "defenseDebuff", target: "pdef", targetLabel: "敵単体", value: 15, timing: "after", label: "敵に物防ダウン15%",
+        duration: {0: 2, 1: 3, 2: 4, 3: 5}
+      }
     ]
   },
   rikku_nine_lives: {

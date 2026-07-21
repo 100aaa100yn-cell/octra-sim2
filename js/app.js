@@ -12,6 +12,7 @@
     $("calculate-button").addEventListener("click", calculateSelectedSkill);
     $("find-best-button").addEventListener("click", findBestSkill);
     $("skill-selector").addEventListener("change", updateEffectPanels);
+    $("boost-selector").addEventListener("change", updateEffectPanels);
     $("apply-after-effects").addEventListener("change", updateEffectPanels);
   });
 
@@ -81,7 +82,19 @@
   }
 
 
-  function renderEffectList(containerId, effects, emptyText) {
+  function getDuration(effect, boostLevel) {
+    if (effect.duration == null) return null;
+    if (typeof effect.duration === "number") return effect.duration;
+    return effect.duration[boostLevel] ?? effect.duration[String(boostLevel)] ?? null;
+  }
+
+  function formatTiming(timing) {
+    if (timing === "after") return "行動後";
+    if (timing === "conditional") return "条件成立時";
+    return "即時";
+  }
+
+  function renderEffectList(containerId, effects, emptyText, boostLevel = 0) {
     const container = $(containerId);
     if (!effects || effects.length === 0) {
       container.innerHTML = `<span class="effect-empty">${emptyText}</span>`;
@@ -89,16 +102,81 @@
     }
 
     container.innerHTML = effects.map((effect) => {
-      const timing = effect.timing === "after" ? '<span class="timing-badge">行動後</span>' : '';
-      return `<div class="effect-chip">${effect.label}${timing}</div>`;
+      const timing = effect.timing === "after"
+        ? '<span class="timing-badge">行動後</span>'
+        : effect.timing === "conditional"
+          ? '<span class="timing-badge conditional">条件</span>'
+          : '';
+      const duration = getDuration(effect, boostLevel);
+      const durationBadge = duration == null
+        ? ''
+        : `<span class="duration-badge">${duration}ターン</span>`;
+      return `<div class="effect-chip">${effect.label}${timing}${durationBadge}</div>`;
     }).join("");
+  }
+
+  function renderSkillDetail(skill, boostLevel) {
+    const panel = $("skill-detail-panel");
+    if (!skill) {
+      panel.innerHTML = "";
+      return;
+    }
+
+    const boostNames = ["BP0", "BP1", "BP2", "BP MAX"];
+    const powerRows = boostNames.map((name, level) => {
+      const power = skill.boostPower?.[level] ?? skill.power;
+      return `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>威力${power}</strong></div>`;
+    }).join("");
+
+    const effectsHtml = (skill.effects || []).length
+      ? skill.effects.map((effect, index) => {
+          const durationCells = [0, 1, 2, 3].map((level) => {
+            const duration = getDuration(effect, level);
+            const text = duration == null ? "—" : `${duration}T`;
+            return `<div class="duration-cell ${level === boostLevel ? "active" : ""}"><span>${boostNames[level]}</span><strong>${text}</strong></div>`;
+          }).join("");
+          return `<article class="effect-detail-card">
+            <div class="effect-detail-title"><span class="effect-number">${index + 1}</span>${effect.label}</div>
+            <div class="effect-meta">対象：${effect.targetLabel || "—"} / 発動：${formatTiming(effect.timing)}</div>
+            <div class="duration-grid">${durationCells}</div>
+            ${getDuration(effect, boostLevel) == null
+              ? '<div class="current-duration no-duration">継続ターンなし（即時・常時・条件効果）</div>'
+              : `<div class="current-duration">現在のBPでは <strong>${getDuration(effect, boostLevel)}ターン</strong></div>`}
+          </article>`;
+        }).join("")
+      : '<div class="effect-empty detail-empty">追加効果・継続効果なし</div>';
+
+    const weaknessText = (skill.weaknessTypes || [skill.damageElement || skill.element].filter(Boolean)).join("・") || "なし";
+    const targetText = skill.target === "allEnemies" ? "敵全体" : "敵単体";
+    const attackType = skill.attackStat === "patk" ? "物理" : "属性";
+    const ignoreTexts = [];
+    if (skill.ignoreEffects?.perfectEvasion) ignoreTexts.push("完全回避無視");
+    if (skill.ignoreEffects?.perfectGuard) ignoreTexts.push("完全防御無視");
+
+    panel.innerHTML = `
+      <div class="skill-summary-grid">
+        <div><span>攻撃種別</span><strong>${attackType}</strong></div>
+        <div><span>対象</span><strong>${targetText}</strong></div>
+        <div><span>属性</span><strong>${skill.damageElement || skill.element || "無属性"}</strong></div>
+        <div><span>ヒット数</span><strong>${skill.hits}回</strong></div>
+      </div>
+      <h4>BP別威力</h4>
+      <div class="boost-grid">${powerRows}</div>
+      <div class="skill-rule-line"><strong>弱点判定：</strong>${weaknessText}</div>
+      ${ignoreTexts.length ? `<div class="skill-rule-line"><strong>無視効果：</strong>${ignoreTexts.join("・")}</div>` : ""}
+      ${skill.repeat ? '<div class="skill-rule-line repeat-rule"><strong>再発動：</strong>BP MAX＋ブレイク中（この技でブレイクした場合を含む）</div>' : ""}
+      <h4>効果と継続ターン</h4>
+      <div class="effect-detail-list">${effectsHtml}</div>
+    `;
   }
 
   function updateEffectPanels() {
     const character = getSelectedCharacter();
     const skill = window.SKILLS[$("skill-selector").value];
-    renderEffectList("character-effects", character.passiveEffects || [], "固有効果なし");
-    renderEffectList("skill-effects", skill?.effects || [], "追加効果なし");
+    const boostLevel = numberValue("boost-selector");
+    renderEffectList("character-effects", character.passiveEffects || [], "固有効果なし", boostLevel);
+    renderEffectList("skill-effects", skill?.effects || [], "追加効果なし", boostLevel);
+    renderSkillDetail(skill, boostLevel);
   }
 
   function getSelectedCharacter() {

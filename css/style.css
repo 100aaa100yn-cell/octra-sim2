@@ -218,3 +218,101 @@ button:hover { filter: brightness(.96); }
   background: #312251;
   color: #e0ceff;
 }
+
+/* v0.4.0: BP別アビリティ効果・継続ターン */
+.duration-badge {
+  margin-left: 5px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: #1b7f5a;
+  color: #fff;
+  font-size: 9px;
+}
+.timing-badge.conditional { background: #d9c4ff; color: #3f2868; }
+.skill-detail-panel {
+  width: 100%;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+.skill-detail-panel h4 { margin: 12px 0 7px; font-size: 12px; color: #324b5e; }
+.skill-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+.skill-summary-grid > div {
+  padding: 7px;
+  border: 1px solid #d9e1e8;
+  border-radius: 6px;
+  background: #fff;
+}
+.skill-summary-grid span,
+.boost-cell span,
+.duration-cell span { display: block; color: var(--muted); font-size: 9px; }
+.skill-summary-grid strong { display: block; margin-top: 2px; font-size: 11px; }
+.boost-grid,
+.duration-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+.boost-cell,
+.duration-cell {
+  padding: 6px 4px;
+  border: 1px solid #d8e0e8;
+  border-radius: 6px;
+  background: #fff;
+  text-align: center;
+}
+.boost-cell.active,
+.duration-cell.active {
+  border-color: var(--primary);
+  background: #e6f2ff;
+  box-shadow: inset 0 0 0 1px var(--primary);
+}
+.boost-cell strong,
+.duration-cell strong { display: block; margin-top: 2px; font-size: 10px; }
+.skill-rule-line {
+  margin-top: 6px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  background: #edf3f7;
+  font-size: 10px;
+}
+.repeat-rule { background: #fff1d9; color: #674410; }
+.effect-detail-list { display: grid; gap: 7px; }
+.effect-detail-card {
+  padding: 8px;
+  border: 1px solid #d8e0e8;
+  border-radius: 7px;
+  background: #fff;
+}
+.effect-detail-title { font-size: 11px; font-weight: 800; }
+.effect-number {
+  display: inline-grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-right: 5px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: #fff;
+  font-size: 9px;
+}
+.effect-meta { margin: 4px 0 6px; color: var(--muted); font-size: 9px; }
+.current-duration {
+  margin-top: 6px;
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: #eaf7ef;
+  color: #165f38;
+  font-size: 10px;
+}
+.current-duration.no-duration { background: #f0f2f4; color: #68737d; }
+.detail-empty { padding: 8px; border: 1px dashed #ccd4dc; border-radius: 6px; }
+
+@media (max-width: 700px) {
+  .skill-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .boost-grid, .duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
