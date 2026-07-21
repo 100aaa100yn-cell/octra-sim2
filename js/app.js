@@ -75,14 +75,9 @@
       const skill = window.SKILLS[skillId];
       const option = document.createElement("option");
       option.value = skill.id;
-      const skillSummary = skill.actionType === "attack"
-        ? `威力${skill.power} × ${skill.hits}`
-        : skill.healPotencyByBoost
-          ? `回復効力${skill.healPotencyByBoost[0]}`
-          : skill.healMaxHpPercentByBoost
-            ? `最大HP${skill.healMaxHpPercentByBoost[0]}%回復`
-            : "補助";
-      option.textContent = `${skill.name}（${skillSummary} / SP${skill.spCost ?? "-"}）`;
+      option.textContent = skill.category === "attack"
+        ? `${skill.name}（威力${skill.power} × ${skill.hits}）`
+        : `${skill.name}（${skill.category === "heal" ? "回復" : "補助"} / SP${skill.sp ?? "-"}）`;
       selector.appendChild(option);
     });
     updateEffectPanels();
@@ -124,91 +119,71 @@
 
   function renderSkillDetail(skill, boostLevel) {
     const panel = $("skill-detail-panel");
-    if (!skill) {
-      panel.innerHTML = "";
-      return;
-    }
+    if (!skill) { panel.innerHTML = ""; return; }
 
     const boostNames = ["BP0", "BP1", "BP2", "BP MAX"];
-    const actionTypeLabels = {
-      attack: "攻撃",
-      heal: "回復",
-      support: "補助",
-      healAndSupport: "回復＋補助"
-    };
+    const categoryLabel = skill.category === "heal" ? "回復" : skill.category === "support" ? "補助" : "攻撃";
     const targetLabels = {
-      singleEnemy: "敵単体",
-      allEnemies: "敵全体",
-      singleAlly: "味方単体",
-      frontRowAllies: "味方前衛全体",
-      allPartyMembers: "味方前後衛全体"
+      singleEnemy:"敵単体", allEnemies:"敵全体", singleAlly:"味方単体",
+      frontAllies:"味方前衛全体", allAllies:"味方前後衛全体"
     };
-    const targetAtBoost = skill.targetByBoost?.[boostLevel] || skill.target;
+    const targetText = targetLabels[skill.target] || "—";
 
-    let valueTitle = "BP別効果";
-    let valueRows = "";
-    if (skill.actionType === "attack") {
-      valueTitle = "BP別威力";
-      valueRows = boostNames.map((name, level) => {
-        const power = skill.boostPower?.[level] ?? skill.power;
-        return `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>威力${power}</strong></div>`;
+    let boostRows = "";
+    if (skill.category === "attack") {
+      boostRows = boostNames.map((name, level) => {
+        const value = skill.boostPower?.[level] ?? skill.power;
+        return `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>威力${value}</strong></div>`;
       }).join("");
-    } else if (skill.healPotencyByBoost) {
-      valueTitle = "BP別回復効力";
-      valueRows = boostNames.map((name, level) => `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>効力${skill.healPotencyByBoost[level]}</strong></div>`).join("");
-    } else if (skill.healMaxHpPercentByBoost) {
-      valueTitle = "BP別回復量";
-      valueRows = boostNames.map((name, level) => `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>${skill.healMaxHpPercentByBoost[level]}%</strong></div>`).join("");
+    } else if (skill.boostHealPower) {
+      boostRows = boostNames.map((name, level) => `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>効力${skill.boostHealPower[level]}</strong></div>`).join("");
+    } else if (skill.boostHealPercent) {
+      boostRows = boostNames.map((name, level) => `<div class="boost-cell ${level === boostLevel ? "active" : ""}"><span>${name}</span><strong>${skill.boostHealPercent[level]}%</strong></div>`).join("");
     }
 
-    const effectsHtml = (skill.effects || []).length
-      ? skill.effects.map((effect, index) => {
-          const durationCells = [0, 1, 2, 3].map((level) => {
-            const duration = getDuration(effect, level);
-            const text = duration == null ? "—" : `${duration}T`;
-            return `<div class="duration-cell ${level === boostLevel ? "active" : ""}"><span>${boostNames[level]}</span><strong>${text}</strong></div>`;
-          }).join("");
-          const currentDuration = getDuration(effect, boostLevel);
-          return `<article class="effect-detail-card">
-            <div class="effect-detail-title"><span class="effect-number">${index + 1}</span>${effect.label}</div>
-            <div class="effect-meta">対象：${effect.targetLabel || "—"} / 発動：${formatTiming(effect.timing)}</div>
-            <div class="duration-grid">${durationCells}</div>
-            ${currentDuration == null
-              ? '<div class="current-duration no-duration">継続ターンなし（即時・特殊・条件効果）</div>'
-              : `<div class="current-duration">現在のBPでは <strong>${currentDuration}ターン</strong></div>`}
-          </article>`;
-        }).join("")
-      : '<div class="effect-empty detail-empty">追加効果・継続効果なし</div>';
+    const effectsHtml = (skill.effects || []).length ? skill.effects.map((effect, index) => {
+      const durationCells = [0,1,2,3].map((level) => {
+        const duration = getDuration(effect, level);
+        return `<div class="duration-cell ${level === boostLevel ? "active" : ""}"><span>${boostNames[level]}</span><strong>${duration == null ? "—" : `${duration}T`}</strong></div>`;
+      }).join("");
+      const current = getDuration(effect, boostLevel);
+      return `<article class="effect-detail-card">
+        <div class="effect-detail-title"><span class="effect-number">${index+1}</span>${effect.label}</div>
+        <div class="effect-meta">対象：${effect.targetLabel || "—"} / 発動：${formatTiming(effect.timing)}</div>
+        <div class="duration-grid">${durationCells}</div>
+        ${current == null ? '<div class="current-duration no-duration">継続ターンなし（即時・常時・条件効果）</div>' : `<div class="current-duration">現在のBPでは <strong>${current}ターン</strong></div>`}
+      </article>`;
+    }).join("") : '<div class="effect-empty detail-empty">追加効果・継続効果なし</div>';
 
-    const weaknessText = skill.actionType === "attack"
-      ? ((skill.weaknessTypes || [skill.damageElement || skill.element].filter(Boolean)).join("・") || "なし")
-      : "—";
     const ignoreTexts = [];
     if (skill.ignoreEffects?.perfectEvasion) ignoreTexts.push("完全回避無視");
     if (skill.ignoreEffects?.perfectGuard) ignoreTexts.push("完全防御無視");
-    if (skill.ignoreEffects?.physicalDefenseUp) ignoreTexts.push("物防アップ無視");
-    if (skill.ignoreEffects?.elementalDefenseUp) ignoreTexts.push("属防アップ無視");
+    if (skill.ignoreEffects?.pdefUp) ignoreTexts.push("物防アップ無視");
+    if (skill.ignoreEffects?.edefUp) ignoreTexts.push("属防アップ無視");
     if (skill.ignoreEffects?.damageReduction) ignoreTexts.push("ダメージ減少無視");
-
-    const summonHtml = skill.summon ? `<div class="skill-rule-line"><strong>召喚獣：</strong>${skill.summon.label}（自身とバディ／他の召喚獣を解除）</div>` : "";
-    const followUpHtml = skill.followUp ? `<div class="skill-rule-line"><strong>追撃：</strong>${skill.followUp.name}・威力${skill.followUp.power}・BP別${Object.values(skill.followUp.hitsByBoost).join("/")}回</div>` : "";
+    const weaknessText = (skill.weaknessTypes || [skill.damageElement || skill.element].filter(Boolean)).join("・") || "—";
+    const notes = (skill.notes || []).map(note => `<li>${note}</li>`).join("");
+    const follow = skill.followUp ? `<div class="skill-rule-line"><strong>追撃：</strong>威力${skill.followUp.power} / BP${boostLevel === 3 ? "MAX" : boostLevel}で${skill.followUp.hitsByBoost[boostLevel]}回 / ${targetLabels[skill.followUp.target] || "敵"}</div>` : "";
 
     panel.innerHTML = `
       <div class="skill-summary-grid">
-        <div><span>種別</span><strong>${actionTypeLabels[skill.actionType] || skill.actionType || "—"}</strong></div>
-        <div><span>消費SP</span><strong>${skill.spCost ?? "—"}</strong></div>
-        <div><span>対象</span><strong>${targetLabels[targetAtBoost] || targetAtBoost || "—"}</strong></div>
-        <div><span>属性／ヒット</span><strong>${skill.actionType === "attack" ? `${skill.damageElement || skill.element || "無属性"} / ${skill.hits}回` : "—"}</strong></div>
+        <div><span>分類</span><strong>${categoryLabel}</strong></div>
+        <div><span>消費SP</span><strong>${skill.sp ?? "—"}</strong></div>
+        <div><span>対象</span><strong>${targetText}</strong></div>
+        <div><span>属性・Hit</span><strong>${skill.category === "attack" ? `${skill.damageElement || skill.element || "無属性"} / ${skill.hits}回` : "—"}</strong></div>
       </div>
-      ${valueRows ? `<h4>${valueTitle}</h4><div class="boost-grid">${valueRows}</div>` : ""}
-      ${skill.actionType === "attack" ? `<div class="skill-rule-line"><strong>弱点判定：</strong>${weaknessText}</div>` : ""}
-      ${skill.skillCapBonus ? `<div class="skill-rule-line"><strong>固有上限加算：</strong>+${skill.skillCapBonus.toLocaleString()}</div>` : ""}
-      ${skill.battleUseLimit ? `<div class="skill-rule-line"><strong>使用制限：</strong>戦闘中${skill.battleUseLimit}回</div>` : ""}
+      ${boostRows ? `<h4>BP別${skill.category === "attack" ? "威力" : "効果量"}</h4><div class="boost-grid">${boostRows}</div>` : ""}
+      ${skill.category === "attack" ? `<div class="skill-rule-line"><strong>弱点判定：</strong>${weaknessText}</div>` : ""}
+      ${skill.shieldRules?.weaknessIndependent ? `<div class="skill-rule-line"><strong>シールド：</strong>弱点外でも削る${skill.shieldRules.bonusPerHit ? ` / 1Hitごとに追加+${skill.shieldRules.bonusPerHit}` : ""}</div>` : ""}
+      ${skill.skillCapBonus ? `<div class="skill-rule-line"><strong>固有上限：</strong>1Hit上限+${skill.skillCapBonus.toLocaleString()}</div>` : ""}
       ${ignoreTexts.length ? `<div class="skill-rule-line"><strong>無視効果：</strong>${ignoreTexts.join("・")}</div>` : ""}
-      ${skill.repeat ? '<div class="skill-rule-line repeat-rule"><strong>再発動：</strong>BP MAX＋ブレイク中（この技でブレイクした場合を含む）</div>' : ""}
-      ${summonHtml}${followUpHtml}
+      ${skill.summon ? `<div class="skill-rule-line"><strong>召喚獣：</strong>${skill.summon}（他の召喚獣を解除）</div>` : ""}
+      ${follow}
+      ${skill.repeat ? '<div class="skill-rule-line repeat-rule"><strong>再発動：</strong>BP MAX＋ブレイク中（この技でブレイクした場合を含む・SP消費なし）</div>' : ""}
+      ${skill.useLimit ? `<div class="skill-rule-line"><strong>使用制限：</strong>戦闘中${skill.useLimit}回</div>` : ""}
       <h4>効果と継続ターン</h4>
       <div class="effect-detail-list">${effectsHtml}</div>
+      ${notes ? `<h4>注意事項</h4><ul class="skill-notes">${notes}</ul>` : ""}
     `;
   }
 
@@ -235,8 +210,12 @@
       },
       patkAdjustment: numberValue("patk-adjustment"),
       eatkAdjustment: numberValue("eatk-adjustment"),
-      attackBuff: numberValue("attack-buff"),
-      damageBonus: numberValue("damage-bonus"),
+      battleAttackBuff: numberValue("battle-attack-buff"),
+      supportAttackBuff: numberValue("support-attack-buff"),
+      battleDamageBonus: numberValue("battle-damage-bonus"),
+      supportDamageBonus: numberValue("support-damage-bonus"),
+      levelMultiplier: numberValue("level-multiplier"),
+      isCritical: $("is-critical").checked,
       capBonus: numberValue("cap-bonus"),
       defenseDebuff: numberValue("defense-debuff"),
       randomMultiplier: numberValue("random-selector"),
@@ -249,10 +228,6 @@
   function calculateSelectedSkill() {
     const character = getSelectedCharacter();
     const skill = window.SKILLS[$("skill-selector").value];
-    if (skill.actionType !== "attack") {
-      $("damage-result").innerHTML = `<div class="result-good">${skill.name}は${skill.actionType === "heal" ? "回復" : "補助"}アビリティです。</div><div>上のアビリティ詳細でBP別効果・対象・継続ターンを確認してください。</div>`;
-      return;
-    }
     const result = window.DamageCalculator.calculate({
       ...getCommonInput(),
       character,
@@ -274,13 +249,30 @@
   }
 
   function renderResult(result, isBestSearch) {
-    const hitItems = result.hitDamages
-      .map((damage, index) => {
-        const activation = index < result.hits ? "1回目" : "再発動";
-        const hitNumber = (index % result.hits) + 1;
-        return `<li>${activation} ${hitNumber}ヒット目：${damage.toLocaleString()}</li>`;
-      })
-      .join("");
+    if (result.nonDamage) {
+      $("damage-result").innerHTML = `
+        <div class="result-good">${result.characterName} / ${result.skillName}</div>
+        <div><strong>分類：</strong>${result.categoryLabel}</div>
+        <div><strong>消費SP：</strong>${result.sp ?? "—"}</div>
+        <div><strong>BP：</strong>${result.boostLevel === 3 ? "MAX" : result.boostLevel}</div>
+        <div class="applied-effects"><strong>効果：</strong>${result.effectLabels.join(" / ") || "詳細パネルを確認してください"}</div>
+        <hr><div>このアビリティは攻撃ではないため、ダメージ倍率は計算しません。</div>`;
+      return;
+    }
+    const mainHitCount = result.hits;
+    const repeatHitCount = result.repeatTriggered ? result.hits : 0;
+    const hitItems = result.hitDamages.map((damage, index) => {
+      let activation = "1回目";
+      let hitNumber = index + 1;
+      if (index >= mainHitCount + repeatHitCount) {
+        activation = "召喚追撃";
+        hitNumber = index - mainHitCount - repeatHitCount + 1;
+      } else if (index >= mainHitCount) {
+        activation = "再発動";
+        hitNumber = index - mainHitCount + 1;
+      }
+      return `<li>${activation} ${hitNumber}ヒット目：${damage.toLocaleString()}</li>`;
+    }).join("");
 
     const repeatHtml = result.repeatTriggered
       ? `<div class="repeat-result"><strong>再発動あり</strong>：${result.firstActivationDamage.toLocaleString()} + ${result.repeatedActivationDamage.toLocaleString()}</div>`
@@ -299,14 +291,21 @@
 
     $("damage-result").innerHTML = `
       ${isBestSearch ? '<div class="result-good">最大候補を自動検索しました</div>' : ""}
+      <div class="damage-multiplier-card">
+        <span class="damage-multiplier-label">ダメージ倍率</span>
+        <strong class="damage-multiplier">×${result.damageMultiplier.toFixed(2)}</strong>
+        <small>補正カテゴリなし・乱数平均・再発動なしを1.00倍（上限適用前）</small>
+      </div>
       <div>${result.characterName} / ${result.skillName}</div>
       <div>ブースト：${result.boostLevel === 3 ? "MAX" : result.boostLevel}</div>
       <div>攻撃種別：${result.attackType}</div>
-      <div>使用攻撃値：${result.attack.toLocaleString()} → ${result.buffedAttack.toLocaleString()}</div>
-      <div>攻撃バフ：手動${result.manualAttackBuff}% + 自動${result.automaticAttackBuff}% = ${result.totalAttackBuff}%</div>
-      <div>ダメージアップ：手動${result.manualDamageBonus}% + 自動${result.automaticDamageBonus}% = ${result.totalDamageBonus}%</div>
+      <div>補正攻撃力：${result.attack.toLocaleString()} → ${result.correctedAttack.toLocaleString()}</div>
+      <div>攻撃バフ・バトアビ枠：手動${result.manualBattleAttackBuff}% + 自動${result.automaticBattleAttackBuff}% → 適用${result.totalBattleAttackBuff}%（上限30%）</div>
+      <div>攻撃バフ・サポ/装備枠：手動${result.manualSupportAttackBuff}% + 自動${result.automaticSupportAttackBuff}% → 適用${result.totalSupportAttackBuff}%（上限30%）</div>
+      <div>ダメージUP・バトアビ枠：手動${result.manualBattleDamageBonus}% + 自動${result.automaticBattleDamageBonus}% → 適用${result.totalBattleDamageBonus}%（上限30%）</div>
+      <div>ダメージUP・サポ/装備枠：手動${result.manualSupportDamageBonus}% + 自動${result.automaticSupportDamageBonus}% → 適用${result.totalSupportDamageBonus}%（上限30%）</div>
       <div>敵防御：${result.defense.toLocaleString()} → ${result.effectiveDefense.toLocaleString()}</div>
-      <div>防御デバフ：手動${result.manualDefenseDebuff}% + 自動${result.automaticDefenseDebuff}% = ${result.totalDefenseDebuff}%</div>
+      <div>防御デバフ：手動${result.manualDefenseDebuff}% + 自動${result.automaticDefenseDebuff}% → 適用${result.totalDefenseDebuff}%（上限30%）</div>
       <div>威力：${result.power} × ${result.hits}ヒット</div>
       <div>弱点：${result.isWeakness ? "あり" : "なし"} / 開始時ブレイク：${result.isBroken ? "あり" : "なし"}</div>
       ${repeatHtml}
@@ -317,7 +316,13 @@
       ${result.deferredEffectLabels.length ? `<div class="deferred-effects"><strong>今回未適用（行動後）：</strong>${result.deferredEffectLabels.join(" / ")}</div>` : ""}
       <div>上限判定：<span class="${result.reachedCap ? "result-warn" : "result-good"}">${result.reachedCap ? "到達" : "未到達"}</span></div>
       <hr>
+      ${result.followUpHits ? `<div class="repeat-result"><strong>召喚追撃</strong>：${result.followUpDamage.toLocaleString()} damage / ${result.followUpHits}Hit</div>` : ""}
       <div class="result-total">${result.totalDamage.toLocaleString()} damage</div>
+      <div>1Hit平均：${result.averageDamagePerHit.toLocaleString()}</div>
+      <div>総Hit数：${result.totalHits.toLocaleString()}Hit</div>
+      <div>基準ダメージ（上限後）：${result.baselineDamage.toLocaleString()}</div>
+      <div>上限込み実効倍率：×${result.effectiveDamageMultiplier.toFixed(2)}</div>
+      <div>倍率内訳：威力×${result.abilityPowerMultiplier.toFixed(2)} / レベル×${result.levelMultiplier.toFixed(2)} / 弱点×${result.weaknessMultiplier.toFixed(2)} / ブレイク×${result.breakMultiplier.toFixed(2)} / 会心×${result.criticalMultiplier.toFixed(2)} / バトアビダメUP×${result.battleDamageMultiplier.toFixed(2)} / サポ・装備ダメUP×${result.supportDamageMultiplier.toFixed(2)} / 乱数×${result.randomMultiplier.toFixed(2)}${result.repeatTriggered ? " / 再発動込み" : ""}</div>
       <div>同条件の理論撃破回数：${result.killTurns?.toLocaleString() ?? "-"}回</div>
       <ul class="hit-list">${hitItems}</ul>
     `;

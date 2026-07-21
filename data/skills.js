@@ -1,116 +1,112 @@
 window.SKILLS = {
-  yuna_cure_single: {
-    id: "yuna_cure_single", characterId: "yuna", name: "ケアル（単体）", actionType: "heal",
-    spCost: 24, target: "singleAlly", healPotencyByBoost: {0:160,1:180,2:220,3:280},
-    effects: [{ type:"heal", targetLabel:"味方単体", timing:"current", label:"味方単体のHPを回復", duration:null }]
+  yuna_cure: {
+    id: "yuna_cure", characterId: "yuna", name: "ケアル（単体）", category: "heal", sp: 24,
+    target: "singleAlly", healPower: 160, boostHealPower: {0:160,1:180,2:220,3:280},
+    effects: [{type:"heal", timing:"current", targetLabel:"味方単体", label:"HP回復"}]
   },
   yuna_esuna: {
-    id: "yuna_esuna", characterId: "yuna", name: "エスナ", actionType: "support",
-    spCost: 15, targetByBoost: {0:"singleAlly",1:"singleAlly",2:"singleAlly",3:"frontRowAllies"},
+    id: "yuna_esuna", characterId: "yuna", name: "エスナ", category: "support", sp: 15,
+    target: "singleAlly", boostTargetAtMax: "frontAllies",
     effects: [
-      { type:"removeStatusAilments", targetLabel:"味方単体（BP MAX時は前衛全体）", timing:"current", label:"状態異常を回復（一部除く）", duration:null },
-      { type:"statusAilmentImmunity", targetLabel:"味方単体（BP MAX時は前衛全体）", timing:"current", label:"状態異常無効化を付与（一部除く）", duration:{0:1,1:2,2:3,3:4} }
+      {type:"statusCure", timing:"current", targetLabel:"味方単体（BP MAX時は前衛全体）", label:"状態異常を回復（一部除く）"},
+      {type:"statusImmunity", timing:"current", targetLabel:"味方単体（BP MAX時は前衛全体）", label:"状態異常無効化（一部除く）", duration:{0:1,1:2,2:3,3:4}}
     ]
   },
-  yuna_summon_valefor: {
-    id:"yuna_summon_valefor", characterId:"yuna", name:"召喚：ヴァルファーレ", actionType:"attack",
-    spCost:107, attackStat:"eatk", element:"wind", damageElement:"wind", target:"allEnemies", hits:3,
-    power:25, boostPower:{0:25,1:35,2:45,3:60}, capMultiplier:1,
-    shieldDamage:{worksWithoutWeakness:true, amountPerHit:2},
-    summon:{type:"valefor", label:"召喚獣ヴァルファーレ", replaceOtherSummons:true, applyTo:["self","buddy"], removeOnOwnerDeath:true},
-    followUp:{name:"ヴァルファーレ追撃", target:"allEnemies", element:"wind", power:25, hitsByBoost:{0:1,1:2,2:3,3:4}, worksWithoutWeakness:true,
-      effects:[{label:"物防・属防ダウン10%",duration:2}]},
+  yuna_valefor: {
+    id:"yuna_valefor", characterId:"yuna", name:"召喚：ヴァルファーレ", category:"attack", sp:107,
+    attackStat:"eatk", element:"wind", damageElement:"wind", power:25, hits:3, target:"allEnemies",
+    boostPower:{0:25,1:35,2:45,3:60}, capMultiplier:1,
+    shieldRules:{weaknessIndependent:true, bonusPerHit:1}, summon:"ヴァルファーレ",
+    followUp:{target:"allEnemies", attackStat:"eatk", element:"wind", power:25, hitsByBoost:{0:1,1:2,2:3,3:4}, weaknessIndependent:true,
+      effects:[{type:"defenseDebuff", targets:["pdef","edef"], value:10, duration:2, label:"物防・属防ダウン10%（2ターン）"}]},
     effects:[
-      {type:"shieldDamage",targetLabel:"敵全体",timing:"current",label:"弱点外でもシールドを削り、1ヒットあたりのシールドダメージ+1",duration:null},
-      {type:"summon",targetLabel:"自身とバディ",timing:"after",label:"召喚獣ヴァルファーレを付与（他の召喚獣を解除）",duration:null},
-      {type:"followUp",targetLabel:"敵全体",timing:"after",label:"行動後に風属性追撃（威力25／BPに応じて1～4回）",duration:null},
-      {type:"defenseDebuff",targetLabel:"敵全体",timing:"after",label:"追撃時に物防・属防ダウン10%",duration:2}
-    ]
+      {type:"shieldBreak", timing:"current", targetLabel:"敵全体", label:"弱点以外でもシールドを削り、シールドダメージ+1"},
+      {type:"summon", timing:"after", targetLabel:"自身とバディ", label:"召喚獣ヴァルファーレを付与（他の召喚獣を解除）"},
+      {type:"followUp", timing:"after", targetLabel:"敵全体", label:"行動後に風追撃（威力25・BPにより1〜4回・1行動につき1回）"},
+      {type:"defenseDebuff", timing:"after", targetLabel:"敵全体", label:"追撃時に物防・属防ダウン10%", duration:2}
+    ], notes:["このアビリティ使用後にも追撃","ユウナ戦闘不能時に解除","ブレイク復帰行動前の敵はブレイク不可"]
   },
   yuna_pray: {
-    id:"yuna_pray", characterId:"yuna", name:"祈る", actionType:"healAndSupport", spCost:80,
-    targetByBoost:{0:"frontRowAllies",1:"frontRowAllies",2:"frontRowAllies",3:"allPartyMembers"},
-    healPotencyByBoost:{0:65,1:85,2:115,3:155},
+    id:"yuna_pray", characterId:"yuna", name:"祈る", category:"heal", sp:80, target:"frontAllies", boostTargetAtMax:"allAllies",
+    healPower:65, boostHealPower:{0:65,1:85,2:115,3:155},
     effects:[
-      {type:"heal",targetLabel:"味方前衛全体（BP MAX時は前後衛全体）",timing:"current",label:"HPを回復",duration:null},
-      {type:"elementDamage",target:"all",value:30,targetLabel:"味方前衛全体（BP MAX時は前後衛全体）",timing:"after",label:"全属性ダメージアップ30%",duration:2}
+      {type:"heal", timing:"current", targetLabel:"味方前衛全体（BP MAX時は前後衛全体）", label:"HP回復"},
+      {type:"elementDamage", target:"all", frame:"battle", value:30, timing:"current", targetLabel:"味方前衛全体（BP MAX時は前後衛全体）", label:"属性ダメージアップ30%", duration:2}
     ]
   },
-  yuna_summon_ixion: {
-    id:"yuna_summon_ixion", characterId:"yuna", name:"召喚：イクシオン", actionType:"attack", spCost:84,
-    attackStat:"eatk", element:"lightning", damageElement:"lightning", target:"allEnemies", hits:6,
-    power:20, boostPower:{0:20,1:25,2:30,3:35}, capMultiplier:1, ignoreEffects:{perfectEvasion:true},
-    summon:{type:"ixion",label:"召喚獣イクシオン",replaceOtherSummons:true,applyTo:["self","buddy"],removeOnOwnerDeath:true},
-    followUp:{name:"イクシオン追撃",target:"selectedEnemy",element:"lightning",power:65,hitsByBoost:{0:3,1:4,2:5,3:6},ignoreEffects:{perfectEvasion:true},effects:[{label:"物攻・属攻ダウン10%",duration:2}]},
+  yuna_ixion: {
+    id:"yuna_ixion", characterId:"yuna", name:"召喚：イクシオン", category:"attack", sp:84,
+    attackStat:"eatk", element:"lightning", damageElement:"lightning", power:20, hits:6, target:"allEnemies",
+    boostPower:{0:20,1:25,2:30,3:35}, capMultiplier:1, summon:"イクシオン",
+    ignoreEffects:{perfectEvasion:true},
+    followUp:{target:"singleEnemy", attackStat:"eatk", element:"lightning", power:65, hitsByBoost:{0:3,1:4,2:5,3:6}, ignoreEffects:{perfectEvasion:true},
+      effects:[{type:"attackDebuff", targets:["patk","eatk"], value:10, duration:2, label:"物攻・属攻ダウン10%（2ターン）"}]},
     effects:[
-      {type:"ignore",targetLabel:"敵全体",timing:"current",label:"完全回避を無視",duration:null},
-      {type:"summon",targetLabel:"自身とバディ",timing:"after",label:"召喚獣イクシオンを付与（他の召喚獣を解除）",duration:null},
-      {type:"followUp",targetLabel:"選択中の敵単体",timing:"after",label:"行動後に雷属性追撃（威力65／BPに応じて3～6回）",duration:null},
-      {type:"attackDebuff",targetLabel:"敵単体",timing:"after",label:"追撃時に物攻・属攻ダウン10%",duration:2}
-    ]
+      {type:"ignoreDefenseEffects", timing:"current", targetLabel:"敵全体", label:"完全回避を無視"},
+      {type:"summon", timing:"after", targetLabel:"自身とバディ", label:"召喚獣イクシオンを付与（他の召喚獣を解除）"},
+      {type:"followUp", timing:"after", targetLabel:"選択中の敵単体", label:"行動後に雷追撃（威力65・BPにより3〜6回・1行動につき1回）"},
+      {type:"attackDebuff", timing:"after", targetLabel:"敵単体", label:"追撃時に物攻・属攻ダウン10%", duration:2}
+    ], notes:["このアビリティ使用後にも追撃","ユウナ戦闘不能時に解除","ブレイク復帰行動前の敵はブレイク不可"]
   },
   yuna_holy: {
-    id:"yuna_holy", characterId:"yuna", name:"ホーリー", actionType:"attack", spCost:91,
-    attackStat:"eatk", element:"light", damageElement:"light", target:"singleEnemy", hits:4,
-    power:85, boostPower:{0:85,1:95,2:105,3:130}, capMultiplier:1,
+    id:"yuna_holy", characterId:"yuna", name:"ホーリー", category:"attack", sp:91,
+    attackStat:"eatk", element:"light", damageElement:"light", power:85, hits:4, target:"singleEnemy",
+    boostPower:{0:85,1:95,2:105,3:130}, capMultiplier:1,
     effects:[
-      {type:"defenseDebuff",target:"edef",value:30,targetLabel:"敵単体",timing:"after",label:"属防ダウン30%",duration:2},
-      {type:"debuffCapUp",targetLabel:"敵単体",timing:"after",label:"バトアビによる属防ダウン上限を50%に変更",duration:2}
+      {type:"defenseDebuff", target:"edef", frame:"battle", value:30, timing:"after", targetLabel:"敵単体", label:"属防ダウン30%", duration:2},
+      {type:"debuffCapUp", target:"edef", value:50, timing:"after", targetLabel:"敵単体", label:"バトアビ属防ダウン上限を50%に変更", duration:2}
     ]
   },
-  yuna_fayth_blessing: {
-    id:"yuna_fayth_blessing", characterId:"yuna", name:"祈り子の加護", actionType:"support", spCost:135,
-    targetByBoost:{0:"frontRowAllies",1:"frontRowAllies",2:"frontRowAllies",3:"allPartyMembers"},
+  yuna_blessing: {
+    id:"yuna_blessing", characterId:"yuna", name:"祈り子の加護", category:"support", sp:135,
+    target:"frontAllies", boostTargetAtMax:"allAllies",
     effects:[
-      {type:"hpRegen",potency:140,targetLabel:"味方前衛全体（BP MAX時は前後衛全体）",timing:"after",label:"HP自動回復（効力140）",duration:{0:2,1:3,2:4,3:5}},
-      {type:"attackBuff",target:"patk",value:30,targetLabel:"味方前衛全体（BP MAX時は前後衛全体）",timing:"after",label:"物攻アップ30%",duration:{0:2,1:3,2:4,3:5}},
-      {type:"attackBuff",target:"eatk",value:30,targetLabel:"味方前衛全体（BP MAX時は前後衛全体）",timing:"after",label:"属攻アップ30%",duration:{0:2,1:3,2:4,3:5}},
-      {type:"hpBarrier",value:10,targetLabel:"味方前衛全体（BP MAX時は前後衛全体）",timing:"after",label:"使用者の最大HP10%分のHPバリア（重複不可）",duration:null},
-      {type:"ultimateGauge",value:50,targetLabel:"味方前後衛全体",timing:"conditional",label:"BP MAX時、必殺技ゲージを50.0%増加",duration:null}
+      {type:"regen", value:140, timing:"current", targetLabel:"味方前衛全体（BP MAX時は前後衛全体）", label:"HP自動回復（効力140）", duration:{0:2,1:3,2:4,3:5}},
+      {type:"attackBuff", target:"patk", frame:"battle", value:30, timing:"current", targetLabel:"味方前衛全体（BP MAX時は前後衛全体）", label:"物攻アップ30%", duration:{0:2,1:3,2:4,3:5}},
+      {type:"attackBuff", target:"eatk", frame:"battle", value:30, timing:"current", targetLabel:"味方前衛全体（BP MAX時は前後衛全体）", label:"属攻アップ30%", duration:{0:2,1:3,2:4,3:5}},
+      {type:"barrier", valuePercent:10, timing:"current", targetLabel:"味方前衛全体（BP MAX時は前後衛全体）", label:"使用者最大HP10%のHPバリア（重複不可）"},
+      {type:"ultimateGauge", value:50, timing:"current", requiredBoostLevel:3, targetLabel:"味方前後衛全体", label:"BP MAX時：必殺技ゲージ+50%"}
     ]
   },
-  yuna_summon_anima: {
-    id:"yuna_summon_anima", characterId:"yuna", name:"召喚：アニマ", actionType:"attack", spCost:240,
-    attackStat:"eatk", element:"dark", damageElement:"dark", target:"allEnemies", hits:4,
-    power:180, boostPower:{0:180,1:205,2:245,3:300}, capMultiplier:1, skillCapBonus:200000,
-    ignoreEffects:{physicalDefenseUp:true,elementalDefenseUp:true,damageReduction:true},
-    summon:{type:"anima",label:"召喚獣アニマ",replaceOtherSummons:true,applyTo:["self","buddy"],removeOnOwnerDeath:true},
-    followUp:{name:"アニマ追撃",target:"selectedEnemy",element:"dark",power:300,hitsByBoost:{0:1,1:2,2:3,3:4},ignoreEffects:{physicalDefenseUp:true,elementalDefenseUp:true,damageReduction:true}},
+  yuna_anima: {
+    id:"yuna_anima", characterId:"yuna", name:"召喚：アニマ", category:"attack", sp:240,
+    attackStat:"eatk", element:"dark", damageElement:"dark", power:180, hits:4, target:"allEnemies",
+    boostPower:{0:180,1:205,2:245,3:300}, capMultiplier:1, skillCapBonus:200000, summon:"アニマ",
+    ignoreEffects:{pdefUp:true,edefUp:true,damageReduction:true},
+    followUp:{target:"singleEnemy", attackStat:"eatk", element:"dark", power:300, hitsByBoost:{0:1,1:2,2:3,3:4}, ignoreEffects:{pdefUp:true,edefUp:true,damageReduction:true}},
     effects:[
-      {type:"capBonus",value:200000,targetLabel:"このアビリティ",timing:"current",label:"ダメージ上限+200,000",duration:null},
-      {type:"ignore",targetLabel:"敵全体",timing:"current",label:"物防・属防アップとダメージ減少効果を無視",duration:null},
-      {type:"summon",targetLabel:"自身とバディ",timing:"after",label:"召喚獣アニマを付与（他の召喚獣を解除）",duration:null},
-      {type:"followUp",targetLabel:"選択中の敵単体",timing:"after",label:"行動後に闇属性追撃（威力300／BPに応じて1～4回）",duration:null}
-    ]
+      {type:"skillCapDisplay", value:200000, timing:"current", targetLabel:"このアビリティ", label:"このアビリティのダメージ上限+200,000"},
+      {type:"ignoreDefenseEffects", timing:"current", targetLabel:"敵全体", label:"物防・属防アップとダメージ減少を無視"},
+      {type:"summon", timing:"after", targetLabel:"自身とバディ", label:"召喚獣アニマを付与（他の召喚獣を解除）"},
+      {type:"followUp", timing:"after", targetLabel:"選択中の敵単体", label:"行動後に闇追撃（威力300・BPにより1〜4回・1行動につき1回）"}
+    ], notes:["このアビリティ使用後にも追撃","ユウナ戦闘不能時に解除","ブレイク復帰行動前の敵はブレイク不可"]
   },
   yuna_ultima: {
-    id:"yuna_ultima", characterId:"yuna", name:"アルテマ", actionType:"attack", spCost:400,
-    attackStat:"eatk", element:"fire", damageElement:"fire", target:"allEnemies", hits:4,
-    power:105, boostPower:{0:105,1:115,2:150,3:200}, capMultiplier:1,
+    id:"yuna_ultima", characterId:"yuna", name:"アルテマ", category:"attack", sp:400,
+    attackStat:"eatk", element:"fire", damageElement:"fire", power:105, hits:4, target:"allEnemies",
+    boostPower:{0:105,1:115,2:150,3:200}, capMultiplier:1,
     weaknessTypes:["fire","ice","lightning","wind","light","dark"],
     ignoreEffects:{perfectEvasion:true,perfectGuard:true},
     repeat:{type:"repeatSameSkill",maxRepeats:1,consumeSp:false,requiredBoostLevel:3,requiresAnyBrokenEnemy:true,includeBreakByThisSkill:true},
     effects:[
-      {type:"multiWeakness",timing:"current",targetLabel:"敵全体",label:"火・氷・雷・風・光・闇弱点を突ける（計算属性は火）",duration:null},
-      {type:"ignoreDefenseEffects",timing:"current",targetLabel:"敵全体",label:"完全回避・完全防御を無視",duration:null},
-      {type:"repeatSameSkill",timing:"conditional",targetLabel:"自身",label:"BP MAX＋ブレイク時にアルテマを再発動（この技でブレイクした場合も含む）",duration:null}
+      {type:"multiWeakness", timing:"current", targetLabel:"敵全体", label:"火・氷・雷・風・光・闇弱点を突ける（ダメージ計算は火）"},
+      {type:"ignoreDefenseEffects", timing:"current", targetLabel:"敵全体", label:"完全回避・完全防御を無視"},
+      {type:"repeatSameSkill", timing:"conditional", targetLabel:"自身", label:"BP MAX＋ブレイク中に再発動（この技でブレイクした場合も含む・SP消費なし）"}
     ]
   },
   yuna_calm_prayer: {
-    id:"yuna_calm_prayer", characterId:"yuna", name:"ナギ節の祈り", actionType:"healAndSupport", spCost:240,
-    target:"allPartyMembers", battleUseLimit:2, healMaxHpPercentByBoost:{0:25,1:50,2:75,3:100},
+    id:"yuna_calm_prayer", characterId:"yuna", name:"ナギ節の祈り", category:"heal", sp:240, target:"allAllies", useLimit:2,
+    healPercent:25, boostHealPercent:{0:25,1:50,2:75,3:100},
     effects:[
-      {type:"percentHeal",targetLabel:"味方前後衛全体",timing:"current",label:"最大HPの25/50/75/100%を回復",duration:null},
-      {type:"autoRevive",targetLabel:"味方前後衛全体",timing:"after",label:"自動復活を付与（復活時の回復量もBPに応じて25/50/75/100%）",duration:null},
-      {type:"useLimit",targetLabel:"自身",timing:"conditional",label:"戦闘中2回のみ使用可能",duration:null},
-      {type:"torchBeforeUpgrade",targetLabel:"味方前後衛全体",timing:"conditional",label:"灯火強化前は即時回復なし／自動復活25%のみ",duration:null}
-    ]
+      {type:"percentHeal", timing:"current", targetLabel:"味方前後衛全体", label:"最大HPの25〜100%を回復"},
+      {type:"autoRevive", timing:"after", targetLabel:"味方前後衛全体", label:"戦闘不能時に即時自動復活（回復量25〜100%・重複時回数増加なし）"}
+    ], notes:["戦闘中2回のみ使用可能","灯火強化前（Lv.1）は最大HP25%の自動復活のみ"]
   },
 
-  tidus_spiral:{id:"tidus_spiral",characterId:"tidus",name:"スパイラルカット",actionType:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:260,hits:1,boostPower:{0:260,1:310,2:390,3:500},capMultiplier:1,effects:[]},
-  tidus_assault:{id:"tidus_assault",characterId:"tidus",name:"チャージ＆アサルト",actionType:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:45,hits:5,boostPower:{0:45,1:55,2:65,3:80},capMultiplier:1,effects:[{type:"attackBuff",target:"patk",targetLabel:"自身",value:15,timing:"after",label:"自身に物攻アップ15%",duration:{0:2,1:3,2:4,3:5}}]},
-  tidus_blitz:{id:"tidus_blitz",characterId:"tidus",name:"エースオブザブリッツ",actionType:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:85,hits:9,boostPower:{0:85,1:95,2:110,3:130},capMultiplier:1,effects:[]},
-  tidus_special:{id:"tidus_special",characterId:"tidus",name:"エナジーレイン",actionType:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:440,hits:1,boostPower:{0:440,1:440,2:440,3:440},capMultiplier:1,effects:[]},
-  rikku_drive:{id:"rikku_drive",characterId:"rikku",name:"ドライブパスカット",actionType:"attack",attackStat:"patk",element:"none",weaponType:"dagger",power:55,hits:4,boostPower:{0:55,1:65,2:80,3:100},capMultiplier:1,effects:[{type:"defenseDebuff",target:"pdef",targetLabel:"敵単体",value:15,timing:"after",label:"敵に物防ダウン15%",duration:{0:2,1:3,2:4,3:5}}]},
-  rikku_nine_lives:{id:"rikku_nine_lives",characterId:"rikku",name:"ナインライヴス",actionType:"attack",attackStat:"patk",element:"none",weaponType:"dagger",power:30,hits:9,boostPower:{0:30,1:38,2:48,3:60},capMultiplier:1,effects:[]}
+  tidus_spiral:{id:"tidus_spiral",characterId:"tidus",name:"スパイラルカット",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:260,hits:1,boostPower:{0:260,1:310,2:390,3:500},capMultiplier:1,effects:[]},
+  tidus_assault:{id:"tidus_assault",characterId:"tidus",name:"チャージ＆アサルト",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:45,hits:5,boostPower:{0:45,1:55,2:65,3:80},capMultiplier:1,effects:[{type:"attackBuff",target:"patk",targetLabel:"自身",value:15,timing:"after",label:"自身に物攻アップ15%",duration:{0:2,1:3,2:4,3:5}}]},
+  tidus_blitz:{id:"tidus_blitz",characterId:"tidus",name:"エースオブザブリッツ",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:85,hits:9,boostPower:{0:85,1:95,2:110,3:130},capMultiplier:1,effects:[]},
+  tidus_special:{id:"tidus_special",characterId:"tidus",name:"エナジーレイン",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:440,hits:1,boostPower:{0:440,1:440,2:440,3:440},capMultiplier:1,effects:[]},
+  rikku_drive:{id:"rikku_drive",characterId:"rikku",name:"ドライブパスカット",category:"attack",attackStat:"patk",element:"none",weaponType:"dagger",power:55,hits:4,boostPower:{0:55,1:65,2:80,3:100},capMultiplier:1,effects:[{type:"defenseDebuff",target:"pdef",targetLabel:"敵単体",value:15,timing:"after",label:"敵に物防ダウン15%",duration:{0:2,1:3,2:4,3:5}}]},
+  rikku_nine_lives:{id:"rikku_nine_lives",characterId:"rikku",name:"ナインライヴス",category:"attack",attackStat:"patk",element:"none",weaponType:"dagger",power:30,hits:9,boostPower:{0:30,1:38,2:48,3:60},capMultiplier:1,effects:[]}
 };
