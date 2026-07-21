@@ -10,9 +10,9 @@
   <header class="app-header">
     <div>
       <h1>オクトラ大陸の覇者 最大ダメージシミュレーター</h1>
-      <p>精密版：枠別バフ上限、クリティカル、レベル補正、0.98〜1.02乱数対応</p>
+      <p>強化版：BP別効果ターン、アビリティ詳細、条件付き再発動、ダメージ上限対応</p>
     </div>
-    <span class="version">v0.4.3</span>
+    <span class="version">v0.4.1</span>
   </header>
 
   <main class="layout">
@@ -76,33 +76,13 @@
           </label>
 
           <label>
-            攻撃バフ・バトアビ枠（%）
-            <input id="battle-attack-buff" type="number" value="0" min="0" max="30" step="1">
+            攻撃バフ（%）
+            <input id="attack-buff" type="number" value="0" min="0" max="300" step="1">
           </label>
 
           <label>
-            攻撃バフ・サポアビ/装備枠（%）
-            <input id="support-attack-buff" type="number" value="0" min="0" max="30" step="1">
-          </label>
-
-          <label>
-            ダメージUP・バトアビ枠（%）
-            <input id="battle-damage-bonus" type="number" value="0" min="0" max="30" step="1">
-          </label>
-
-          <label>
-            ダメージUP・サポアビ/装備枠（%）
-            <input id="support-damage-bonus" type="number" value="0" min="0" max="30" step="1">
-          </label>
-
-          <label>
-            レベル補正倍率
-            <input id="level-multiplier" type="number" value="1" min="0.01" max="10" step="0.01">
-          </label>
-
-          <label class="check-row">
-            <input id="is-critical" type="checkbox">
-            クリティカル（×1.25）
+            ダメージアップ（%）
+            <input id="damage-bonus" type="number" value="0" min="0" max="300" step="1">
           </label>
 
           <label>
@@ -113,9 +93,9 @@
           <label>
             乱数
             <select id="random-selector">
-              <option value="1">平均（1.00）</option>
-              <option value="1.02" selected>最大（1.02）</option>
-              <option value="0.98">最小（0.98）</option>
+              <option value="1">平均</option>
+              <option value="1.05" selected>最大</option>
+              <option value="0.95">最小</option>
             </select>
           </label>
         </div>
@@ -146,7 +126,7 @@
 
           <label>
             防御デバフ（%）
-            <input id="defense-debuff" type="number" value="0" min="0" max="30" step="1">
+            <input id="defense-debuff" type="number" value="0" min="0" max="100" step="1">
           </label>
 
           <label>
