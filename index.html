@@ -1,36 +1,138 @@
-index.html
-css/
-  simulator.css
-js/
-  app.js
-  battle-engine.js
-  damage-calculator.js
-  function calculateSkillDamage({
-    attacker,
-    skill,
-    enemy,
-    buffs,
-    debuffs,
-    boostLevel,
-    damageCap
-}) {
-    // 1. 使用する物攻・属攻を決定
-    // 2. アビリティ威力を決定
-    // 3. 攻撃バフを適用
-    // 4. 敵防御・防御デバフを適用
-    // 5. 武器・属性ダメージ補正を適用
-    // 6. 弱点・ブレイク補正を適用
-    // 7. 特殊倍率を適用
-    // 8. 乱数の最大値を適用
-    // 9. 1ヒットごとのダメージ上限を適用
-    // 10. 追撃・再発動を追加
-}
-  buff-manager.js
-  party-manager.js
-  equipment-manager.js
-data/
-  characters.js
-  skills.js
-  equipment.js
-  accessories.js
-  enemies.js
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>オクトラ大陸の覇者 最大ダメージシミュレーター</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <h1>オクトラ大陸の覇者 最大ダメージシミュレーター</h1>
+      <p>初期版：8人編成・単体アビリティ・弱点・ブレイク・ダメージ上限対応</p>
+    </div>
+    <span class="version">v0.1.0</span>
+  </header>
+
+  <main class="layout">
+    <section>
+      <div class="box">
+        <h2>8人編成</h2>
+        <p class="hint">カードをクリックすると、下の攻撃設定がそのキャラクターに切り替わります。</p>
+
+        <h3 class="front-title">前衛</h3>
+        <div id="front-party" class="party-grid"></div>
+
+        <h3 class="back-title">後衛</h3>
+        <div id="back-party" class="party-grid"></div>
+      </div>
+
+      <div class="box">
+        <h2>攻撃設定：<span id="selected-character-name">-</span></h2>
+
+        <div class="form-grid">
+          <label>
+            アビリティ
+            <select id="skill-selector"></select>
+          </label>
+
+          <label>
+            ブースト段階
+            <select id="boost-selector">
+              <option value="0">ブーストなし</option>
+              <option value="1">ブースト1</option>
+              <option value="2">ブースト2</option>
+              <option value="3">ブーストMAX</option>
+            </select>
+          </label>
+
+          <label>
+            物攻補正
+            <input id="patk-adjustment" type="number" value="0" step="1">
+          </label>
+
+          <label>
+            属攻補正
+            <input id="eatk-adjustment" type="number" value="0" step="1">
+          </label>
+
+          <label>
+            攻撃バフ（%）
+            <input id="attack-buff" type="number" value="0" min="0" max="300" step="1">
+          </label>
+
+          <label>
+            ダメージアップ（%）
+            <input id="damage-bonus" type="number" value="0" min="0" max="300" step="1">
+          </label>
+
+          <label>
+            ダメージ上限加算
+            <input id="cap-bonus" type="number" value="0" min="0" step="1000">
+          </label>
+
+          <label>
+            乱数
+            <select id="random-selector">
+              <option value="1">平均</option>
+              <option value="1.05" selected>最大</option>
+              <option value="0.95">最小</option>
+            </select>
+          </label>
+        </div>
+
+        <button id="calculate-button" class="primary-button">最大ダメージを計算</button>
+        <button id="find-best-button" class="secondary-button">このキャラの最大アビリティを検索</button>
+      </div>
+    </section>
+
+    <aside>
+      <div class="box sticky-box">
+        <h2>敵設定</h2>
+        <div class="form-grid single-column">
+          <label>
+            敵HP
+            <input id="enemy-hp" type="number" value="10000000" min="1" step="1000">
+          </label>
+
+          <label>
+            物防
+            <input id="enemy-pdef" type="number" value="200" min="0" step="1">
+          </label>
+
+          <label>
+            属防
+            <input id="enemy-edef" type="number" value="200" min="0" step="1">
+          </label>
+
+          <label>
+            防御デバフ（%）
+            <input id="defense-debuff" type="number" value="0" min="0" max="100" step="1">
+          </label>
+
+          <label class="check-row">
+            <input id="is-weakness" type="checkbox" checked>
+            弱点を突く
+          </label>
+
+          <label class="check-row">
+            <input id="is-broken" type="checkbox" checked>
+            ブレイク状態
+          </label>
+        </div>
+
+        <h2 class="result-heading">計算結果</h2>
+        <div id="damage-result" class="result-panel">
+          条件を設定して計算してください。
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="data/characters.js"></script>
+  <script src="data/skills.js"></script>
+  <script src="js/damage-calculator.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
