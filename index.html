@@ -2,115 +2,158 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>オクトラ ダメージシミュレーター</title>
+    <title>オクトラ FF10コラボ固有対応8人シミュレーター</title>
     <style>
-        body { font-family: sans-serif; margin: 20px; background: #f0f0f0; }
-        .box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        button { padding: 10px 15px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
-        button:hover { background: #0056b3; }
-        .log { background: #333; color: #fff; padding: 15px; border-radius: 4px; font-family: monospace; height: 200px; overflow-y: scroll; }
+        body { font-family: sans-serif; margin: 15px; background: #f0f0f0; color: #333; font-size: 13px; }
+        .layout { display: grid; grid-template-columns: 1fr 420px; gap: 15px; }
+        .box { background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h2 { font-size: 15px; margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 3px; margin-bottom: 10px; }
+        
+        /* 8人パーティー配置 */
+        .party-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
+        .char-card { border: 2px solid #ccc; border-radius: 6px; padding: 8px; background: #f8f9fa; cursor: pointer; }
+        .char-card.active-front { border-color: #007bff; background: #e7f1ff; }
+        .char-card.active-back { border-color: #17a2b8; background: #e0f7fa; }
+        .char-pos { font-size: 10px; font-weight: bold; color: #777; }
+        .char-title { font-weight: bold; font-size: 13px; color: #111; margin: 2px 0; }
+        
+        .skill-section { margin-top: 10px; }
+        .skill-group-title { font-weight: bold; color: #555; margin: 5px 0 2px 0; font-size: 11px; }
+        
+        button.action-btn { display: block; width: 100%; text-align: left; padding: 8px; font-size: 12px; cursor: pointer; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 4px; }
+        button.action-btn:hover { background: #f1f3f5; }
+        .btn-atk { border-left: 4px solid #dc3545; }
+        .btn-buff { border-left: 4px solid #28a745; }
+        .btn-sp { border-left: 4px solid #ffc107; }
+        
+        .log { background: #333; color: #fff; padding: 12px; border-radius: 4px; font-family: monospace; height: 580px; overflow-y: scroll; font-size: 12px; line-height: 1.5; }
+        .badge { padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; margin-top: 2px; margin-right: 2px; background: #e2e3e5; color: #333; }
+        .badge-active { background: #dc3545; color: white; }
+        .badge-blue { background: #007bff; color: white; }
+        .badge-yellow { background: #ffc107; color: #222; }
+        
+        select.char-selector { width: 100%; padding: 4px; font-weight: bold; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
-    <h1>オクトラ ターン管理シミュレーター</h1>
+    <h1>オクトラ 8人編成固有キャラシミュレーター (ターン: <span id="global-turn">1</span>)</h1>
 
-    <div class="box">
-        <h2>現在のステータス (ターン: <span id="current-turn">1</span>)</h2>
-        <p>ユウナの属攻: <strong>500</strong></p>
-        <p>必殺技バフの残りターン: <span id="special-buff-turns">0</span> (効果: 属攻+20% / ダメージ上限+10万)</p>
-        <p>召喚追撃の残りターン: <span id="summon-turns">0</span> (効果: 行動後に風属性の追撃発生)</p>
-    </div>
+    <div class="layout">
+        <!-- 左側：パーティー編成と行動コマンド -->
+        <div>
+            <p style="margin:0 0 4px 0; font-weight:bold; color:#007bff;">【前衛スロット】 ※クリックして選択・行動コマンド切り替え</p>
+            <div class="party-grid">
+                <div class="char-card active-front" id="card-0" onclick="selectSlot(0)">
+                    <div class="char-pos">第1列・前衛</div>
+                    <select id="sel-0" class="char-selector" onchange="changeCharType(0, this.value)"><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option><option value="rikku">リュック</option></select>
+                    <div id="disp-status-0"></div>
+                </div>
+                <div class="char-card" id="card-1" onclick="selectSlot(1)">
+                    <div class="char-pos">第2列・前衛</div>
+                    <select id="sel-1" class="char-selector" onchange="changeCharType(1, this.value)"><option value="tidus">ティーダ</option><option value="yuna">ユウナ</option><option value="rikku">リュック</option></select>
+                    <div id="disp-status-1"></div>
+                </div>
+                <div class="char-card" id="card-2" onclick="selectSlot(2)">
+                    <div class="char-pos">第3列・前衛</div>
+                    <select id="sel-2" class="char-selector" onchange="changeCharType(2, this.value)"><option value="rikku">リュック</option><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option></select>
+                    <div id="disp-status-2"></div>
+                </div>
+                <div class="char-card" id="card-3" onclick="selectSlot(3)">
+                    <div class="char-pos">第4列・前衛</div>
+                    <select id="sel-3" class="char-selector" onchange="changeCharType(3, this.value)"><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option><option value="rikku">リュック</option></select>
+                    <div id="disp-status-3"></div>
+                </div>
+            </div>
 
-    <div class="box">
-        <h2>行動選択</h2>
-        <button onclick="useAction('normal')">通常攻撃を行う</button>
-        <button onclick="useAction('special')" style="background-color: #dc3545;">必殺技「異送り」</button>
-        <button onclick="useAction('valefor')" style="background-color: #28a745;">風 召喚：ヴァルファーレ</button>
-    </div>
+            <p style="margin:10px 0 4px 0; font-weight:bold; color:#17a2b8;">【後衛スロット】</p>
+            <div class="party-grid">
+                <div class="char-card" id="card-4" onclick="selectSlot(4)">
+                    <div class="char-pos">第1列・後衛</div>
+                    <select id="sel-4" class="char-selector" onchange="changeCharType(4, this.value)"><option value="tidus">ティーダ</option><option value="yuna">ユウナ</option><option value="rikku">リュック</option></select>
+                    <div id="disp-status-4"></div>
+                </div>
+                <div class="char-card" id="card-5" onclick="selectSlot(5)">
+                    <div class="char-pos">第2列・後衛</div>
+                    <select id="sel-5" class="char-selector" onchange="changeCharType(5, this.value)"><option value="rikku">リュック</option><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option></select>
+                    <div id="disp-status-5"></div>
+                </div>
+                <div class="char-card" id="card-6" onclick="selectSlot(6)">
+                    <div class="char-pos">第3列・後衛</div>
+                    <select id="sel-6" class="char-selector" onchange="changeCharType(6, this.value)"><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option><option value="rikku">リュック</option></select>
+                    <div id="disp-status-6"></div>
+                </div>
+                <div class="char-card" id="card-7" onclick="selectSlot(7)">
+                    <div class="char-pos">第4列・後衛</div>
+                    <select id="sel-7" class="char-selector" onchange="changeCharType(7, this.value)"><option value="tidus">ティーダ</option><option value="yuna">ユウナ</option><option value="rikku">リュック</option></select>
+                    <div id="disp-status-7"></div>
+                </div>
+            </div>
 
-    <div class="box">
-        <h2>戦闘ログ</h2>
-        <div id="battle-log" class="log"></div>
+            <!-- アビリティ操作パネル -->
+            <div class="box">
+                <h2>固有コマンドパネル: <span id="panel-char-name" style="color:#007bff;">-</span></h2>
+                <div id="panel-sap-info" style="background:#f8f9fa; padding:6px; border-radius:4px; margin-bottom:10px; font-size:11px;"></div>
+                
+                <div id="action-buttons-container"></div>
+
+                <button style="margin-top:10px; text-align:center; background:#6c757d; color:#fff;" class="action-btn" onclick="passTurn()">行動せずに1ターン進める</button>
+            </div>
+        </div>
+
+        <!-- 右側：戦闘ログ -->
+        <div class="box" style="height: calc(100% - 25px);">
+            <h2>戦闘ログ (仮想敵防御力: 200 / 弱点補正: 1.3倍固定)</h2>
+            <div id="battle-log" class="log"></div>
+        </div>
     </div>
 
     <script>
-        // --- 1. データ構造（初期状態） ---
         let currentTurn = 1;
-        let yuna = {
-            baseAtk: 500,
-            turns: {
-                specialBuff: 0,  // 必殺技バフの残りターン
-                summonValefor: 0 // 召喚追撃の残りターン
+        let selectedIndex = 0;
+
+        // 全体にかかるフィールドバフ（ユウナ必殺など）
+        let globalBuffs = {
+            specialAtkBuffTurns: 0,
+            specialCapBuffTurns: 0
+        };
+
+        // キャラクター別の固有データマスター
+        const characterMaster = {
+            yuna: {
+                name: "ユウナ", atk: 510, type: "属攻",
+                sapText: "【サポアビ】常時全属性弱点突き / ダメージ上限+10万",
+                sapCap: 100000, sapBuff: 15,
+                skills: [
+                    { category: "battle", type: "atk", name: "風 召喚：ヴァルファーレ", power: 65, hits: 3, effect: "valefor_trigger", desc: "威力65×3 / 自身に行動後風追撃付与(2T)" },
+                    { category: "battle", type: "buff", name: "励声の光線", power: 45, hits: 4, effect: "yuna_buff", desc: "威力45×4 / 自身に属攻バフ15%付与(2T)" },
+                    { category: "ex", type: "atk", name: "極召喚：バハムート", power: 120, hits: 5, effect: "bahamut_trigger", desc: "威力120×5 / 行動後無追撃付与(2T) / この攻撃のみ上限2倍" },
+                    { category: "special", type: "sp", name: "異送り", power: 500, hits: 1, effect: "yuna_special", desc: "威力500×1 / 味方全体に属攻+20%・上限+10万(3T)を展開" }
+                ]
+            },
+            tidus: {
+                name: "ティーダ", atk: 535, type: "物攻",
+                sapText: "【サポアビ】水属性ダメージアップ+30% / ダメージ上限+5万",
+                sapCap: 50000, sapBuff: 30,
+                skills: [
+                    { category: "battle", type: "atk", name: "スパイラルカット", power: 260, hits: 1, effect: "none", desc: "威力260×1 / 単発高火力水物理攻撃" },
+                    { category: "battle", type: "atk", name: "チャージ＆アサルト", power: 45, hits: 5, effect: "tidus_buff", desc: "威力45×5 / 自身に物攻バフ15%付与(2T)" },
+                    { category: "ex", type: "atk", name: "エースオブザブリッツ", power: 85, hits: 9, effect: "none", desc: "威力85×9 / 驚異の9連撃物理アタック" },
+                    { category: "special", type: "sp", name: "エナジーレイン", power: 440, hits: 1, effect: "none", desc: "威力440×1 / 高威力必殺技" }
+                ]
+            },
+            rikku: {
+                name: "リュック", atk: 495, type: "物攻",
+                sapText: "【サポアビ】攻撃時まれに物防・属防15%ダウン付与 / ダメージ上限+3万",
+                sapCap: 30000, sapBuff: 10,
+                skills: [
+                    { category: "battle", type: "atk", name: "ドライブパスカット", power: 55, hits: 4, effect: "rikku_debuff", desc: "威力55×4 / 敵に物防15%ダウンを強制付与(2T)" },
+                    { category: "battle", type: "buff", name: "調合：ハイポーション", power: 0, hits: 0, effect: "rikku_heal", desc: "味方全体の体力を中回復＋状態異常を治療" },
+                    { category: "ex", type: "atk", name: "ナインライヴス", power: 30, hits: 9, effect: "none", desc: "威力30×9 / 敵のシールドを激しく削り取る短剣攻撃" },
+                    { category: "special", type: "sp", name: "マイティガードG", power: 0, hits: 0, effect: "rikku_special", desc: "味方全体に物理・属性防御20%UP＋自動回復を付与(3T)" }
+                ]
             }
         };
 
-        // 画面の数値を最新の状態に更新する関数
-        function updateUI() {
-            document.getElementById('current-turn').textContent = currentTurn;
-            document.getElementById('special-buff-turns').textContent = yuna.turns.specialBuff;
-            document.getElementById('summon-turns').textContent = yuna.turns.summonValefor;
-        }
-
-        // ログを画面に追加する関数
-        function addLog(text) {
-            const logBox = document.getElementById('battle-log');
-            logBox.innerHTML += `[ターン ${currentTurn}] ${text}<br>`;
-            logBox.scrollTop = logBox.scrollHeight; // 常に最新のログにスクロール
-        }
-
-        // --- 2. メインの処理ロジック ---
-        function useAction(actionType) {
-            let logText = "";
-            let baseDamage = 10000; // 簡易的な基本ダメージの土台
-            let damageCap = 99999;  // 通常のダメージ上限
-
-            // 【ステップA】行動ごとの固有処理（バフの付与など）
-            if (actionType === 'special') {
-                logText += "ユウナは必殺技「異送り」を発動！ ";
-                yuna.turns.specialBuff = 3; // 必殺バフを3ターン付与
-                baseDamage = 25000;         // 必殺技は高威力
-            } else if (actionType === 'valefor') {
-                logText += "ユウナは「風 召喚：ヴァルファーレ」を唱えた！ ";
-                yuna.turns.summonValefor = 2; // 追撃バフを2ターン付与
-                baseDamage = 15000;
-            } else {
-                logText += "ユウナの通常攻撃。 ";
-            }
-
-            // 【ステップB】現在かかっているバフの判定
-            // 必殺バフが残っている場合
-            if (yuna.turns.specialBuff > 0) {
-                baseDamage = baseDamage * 1.2; // 属攻+20%の簡易乗算
-                damageCap += 100000;          // ダメージ上限を+10万
-                logText += "(必殺技バフ適用中) ";
-            }
-
-            // 【ステップC】ダメージの上限（カンスト）判定
-            let finalDamage = Math.min(baseDamage, damageCap);
-            logText += `敵に **${Math.floor(finalDamage)}** のダメージを与えた。`;
-
-            // 【ステップD】召喚追撃の判定（行動後にバフが残っていれば発生）
-            if (yuna.turns.summonValefor > 0) {
-                let summonDamage = 5000;
-                if (yuna.turns.specialBuff > 0) summonDamage *= 1.2; // 追撃にも必殺バフが乗る
-                logText += `<br> ➔ [追撃発動] ヴァルファーレが風属性攻撃！ **${Math.floor(summonDamage)}** のダメージ！`;
-            }
-
-            // ログの出力
-            addLog(logText);
-
-            // 【ステップE】ターン終了処理（カウントダウン）
-            // 1以上の場合はターン数を1減らす（0未満にはしない）
-            if (yuna.turns.specialBuff > 0) yuna.turns.specialBuff--;
-            if (yuna.turns.summonValefor > 0) yuna.turns.summonValefor--;
-
-            currentTurn++; // ターンを1進める
-            updateUI();    // 画面の表示を更新
-        }
-
-        // 初回起動時の画面更新
-        updateUI();
-    </script>
-</body>
-</html>
+        // 8つのスロットの進行データ状態
+        let partySlots = [
