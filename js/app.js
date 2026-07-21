@@ -193,8 +193,12 @@
       },
       patkAdjustment: numberValue("patk-adjustment"),
       eatkAdjustment: numberValue("eatk-adjustment"),
-      attackBuff: numberValue("attack-buff"),
-      damageBonus: numberValue("damage-bonus"),
+      battleAttackBuff: numberValue("battle-attack-buff"),
+      supportAttackBuff: numberValue("support-attack-buff"),
+      battleDamageBonus: numberValue("battle-damage-bonus"),
+      supportDamageBonus: numberValue("support-damage-bonus"),
+      levelMultiplier: numberValue("level-multiplier"),
+      isCritical: $("is-critical").checked,
       capBonus: numberValue("cap-bonus"),
       defenseDebuff: numberValue("defense-debuff"),
       randomMultiplier: numberValue("random-selector"),
@@ -240,9 +244,9 @@
       ? `<div class="repeat-result"><strong>再発動あり</strong>：${result.firstActivationDamage.toLocaleString()} + ${result.repeatedActivationDamage.toLocaleString()}</div>`
       : `<div>再発動：なし</div>`;
 
-    const specialHtml = result.skillName.includes("バハムート")
+    const specialHtml = result.skillName.includes("アルテマ")
       ? `<div class="special-details">
-          <strong>バハムート特殊判定</strong><br>
+          <strong>アルテマ特殊判定</strong><br>
           ダメージ属性：火 / 弱点判定：火・氷・雷・風・光・闇<br>
           完全回避・完全防御：無視<br>
           開始シールド：${result.initialShield} → 攻撃後：${result.remainingShield}<br>
@@ -256,16 +260,18 @@
       <div class="damage-multiplier-card">
         <span class="damage-multiplier-label">ダメージ倍率</span>
         <strong class="damage-multiplier">×${result.damageMultiplier.toFixed(2)}</strong>
-        <small>通常条件の同じ技を1.00倍として比較</small>
+        <small>補正カテゴリなし・乱数平均・再発動なしを1.00倍（上限適用前）</small>
       </div>
       <div>${result.characterName} / ${result.skillName}</div>
       <div>ブースト：${result.boostLevel === 3 ? "MAX" : result.boostLevel}</div>
       <div>攻撃種別：${result.attackType}</div>
-      <div>使用攻撃値：${result.attack.toLocaleString()} → ${result.buffedAttack.toLocaleString()}</div>
-      <div>攻撃バフ：手動${result.manualAttackBuff}% + 自動${result.automaticAttackBuff}% = ${result.totalAttackBuff}%</div>
-      <div>ダメージアップ：手動${result.manualDamageBonus}% + 自動${result.automaticDamageBonus}% = ${result.totalDamageBonus}%</div>
+      <div>補正攻撃力：${result.attack.toLocaleString()} → ${result.correctedAttack.toLocaleString()}</div>
+      <div>攻撃バフ・バトアビ枠：手動${result.manualBattleAttackBuff}% + 自動${result.automaticBattleAttackBuff}% → 適用${result.totalBattleAttackBuff}%（上限30%）</div>
+      <div>攻撃バフ・サポ/装備枠：手動${result.manualSupportAttackBuff}% + 自動${result.automaticSupportAttackBuff}% → 適用${result.totalSupportAttackBuff}%（上限30%）</div>
+      <div>ダメージUP・バトアビ枠：手動${result.manualBattleDamageBonus}% + 自動${result.automaticBattleDamageBonus}% → 適用${result.totalBattleDamageBonus}%（上限30%）</div>
+      <div>ダメージUP・サポ/装備枠：手動${result.manualSupportDamageBonus}% + 自動${result.automaticSupportDamageBonus}% → 適用${result.totalSupportDamageBonus}%（上限30%）</div>
       <div>敵防御：${result.defense.toLocaleString()} → ${result.effectiveDefense.toLocaleString()}</div>
-      <div>防御デバフ：手動${result.manualDefenseDebuff}% + 自動${result.automaticDefenseDebuff}% = ${result.totalDefenseDebuff}%</div>
+      <div>防御デバフ：手動${result.manualDefenseDebuff}% + 自動${result.automaticDefenseDebuff}% → 適用${result.totalDefenseDebuff}%（上限30%）</div>
       <div>威力：${result.power} × ${result.hits}ヒット</div>
       <div>弱点：${result.isWeakness ? "あり" : "なし"} / 開始時ブレイク：${result.isBroken ? "あり" : "なし"}</div>
       ${repeatHtml}
@@ -279,8 +285,9 @@
       <div class="result-total">${result.totalDamage.toLocaleString()} damage</div>
       <div>1Hit平均：${result.averageDamagePerHit.toLocaleString()}</div>
       <div>総Hit数：${result.totalHits.toLocaleString()}Hit</div>
-      <div>基準ダメージ：${result.baselineDamage.toLocaleString()}</div>
-      <div>倍率内訳：弱点×${result.weaknessMultiplier.toFixed(2)} / ブレイク×${result.breakMultiplier.toFixed(2)} / ダメージ補正×${result.damageBonusMultiplier.toFixed(2)} / 乱数×${result.randomMultiplier.toFixed(2)}${result.repeatTriggered ? " / 再発動あり" : ""}</div>
+      <div>基準ダメージ（上限後）：${result.baselineDamage.toLocaleString()}</div>
+      <div>上限込み実効倍率：×${result.effectiveDamageMultiplier.toFixed(2)}</div>
+      <div>倍率内訳：威力×${result.abilityPowerMultiplier.toFixed(2)} / レベル×${result.levelMultiplier.toFixed(2)} / 弱点×${result.weaknessMultiplier.toFixed(2)} / ブレイク×${result.breakMultiplier.toFixed(2)} / 会心×${result.criticalMultiplier.toFixed(2)} / バトアビダメUP×${result.battleDamageMultiplier.toFixed(2)} / サポ・装備ダメUP×${result.supportDamageMultiplier.toFixed(2)} / 乱数×${result.randomMultiplier.toFixed(2)}${result.repeatTriggered ? " / 再発動込み" : ""}</div>
       <div>同条件の理論撃破回数：${result.killTurns?.toLocaleString() ?? "-"}回</div>
       <ul class="hit-list">${hitItems}</ul>
     `;

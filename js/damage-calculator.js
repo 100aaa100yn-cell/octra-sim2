@@ -1,50 +1,45 @@
 window.DamageCalculator = (() => {
+  const FRAME_CAP = 30;
+
   function clamp(value, min, max) {
     return Math.min(Math.max(Number(value) || 0, min), max);
   }
 
   function collectAutomaticEffects(character, skill, applyAfterEffects) {
-    const activeEffects = [...(character.passiveEffects || [])];
+    const activeEffects = (character.passiveEffects || []).map((effect) => ({ ...effect, frame: effect.frame || "support" }));
     const deferredEffects = [];
 
     (skill.effects || []).forEach((effect) => {
-      if (effect.timing === "current" || effect.timing === "conditional" || applyAfterEffects) {
-        activeEffects.push(effect);
-      } else {
-        deferredEffects.push(effect);
-      }
+      const framedEffect = { ...effect, frame: effect.frame || "battle" };
+      if (effect.timing === "current" || effect.timing === "conditional" || applyAfterEffects) activeEffects.push(framedEffect);
+      else deferredEffects.push(framedEffect);
     });
-
     return { activeEffects, deferredEffects };
   }
 
   function summarizeEffects({ character, skill, applyAfterEffects }) {
     const { activeEffects, deferredEffects } = collectAutomaticEffects(character, skill, applyAfterEffects);
     const summary = {
-      attackBuff: 0,
-      damageBonus: 0,
-      defenseDebuff: 0,
-      capBonus: 0,
-      labels: [],
+      battleAttackBuff: 0, supportAttackBuff: 0,
+      battleDamageBonus: 0, supportDamageBonus: 0,
+      defenseDebuff: 0, capBonus: 0, labels: [],
       deferredLabels: deferredEffects.map((effect) => effect.label)
     };
 
     activeEffects.forEach((effect) => {
-      if (effect.type === "attackBuff" && effect.target === skill.attackStat) summary.attackBuff += Number(effect.value) || 0;
-      if (effect.type === "weaponDamage" && effect.target === skill.weaponType) summary.damageBonus += Number(effect.value) || 0;
-      if (effect.type === "elementDamage" && (effect.target === "all" || effect.target === (skill.damageElement || skill.element))) summary.damageBonus += Number(effect.value) || 0;
-
+      const frame = effect.frame === "battle" ? "battle" : "support";
+      if (effect.type === "attackBuff" && effect.target === skill.attackStat) summary[`${frame}AttackBuff`] += Number(effect.value) || 0;
+      const damageMatches =
+        (effect.type === "weaponDamage" && effect.target === skill.weaponType) ||
+        (effect.type === "elementDamage" && (effect.target === "all" || effect.target === (skill.damageElement || skill.element)));
+      if (damageMatches) summary[`${frame}DamageBonus`] += Number(effect.value) || 0;
       if (effect.type === "defenseDebuff") {
-        const matchesDefense =
-          (skill.attackStat === "patk" && effect.target === "pdef") ||
-          (skill.attackStat === "eatk" && effect.target === "edef");
+        const matchesDefense = (skill.attackStat === "patk" && effect.target === "pdef") || (skill.attackStat === "eatk" && effect.target === "edef");
         if (matchesDefense) summary.defenseDebuff += Number(effect.value) || 0;
       }
-
       if (effect.type === "capBonus") summary.capBonus += Number(effect.value) || 0;
       summary.labels.push(effect.label);
     });
-
     return summary;
   }
 
@@ -57,29 +52,41 @@ window.DamageCalculator = (() => {
     const boostLevel = clamp(input.boostLevel, 0, 3);
     const automatic = summarizeEffects({ character, skill, applyAfterEffects: Boolean(input.applyAfterEffects) });
 
-    const manualAttackBuff = clamp(input.attackBuff, 0, 300);
-    const manualDamageBonus = clamp(input.damageBonus, 0, 300);
-    const manualDefenseDebuff = clamp(input.defenseDebuff, 0, 100);
-    const attackBuff = clamp(manualAttackBuff + automatic.attackBuff, 0, 300);
-    const damageBonus = clamp(manualDamageBonus + automatic.damageBonus, 0, 300);
-    const defenseDebuff = clamp(manualDefenseDebuff + automatic.defenseDebuff, 0, 100);
-    const randomMultiplier = Number(input.randomMultiplier) || 1;
+    const manualBattleAttackBuff = clamp(input.battleAttackBuff, 0, FRAME_CAP);
+    const manualSupportAttackBuff = clamp(input.supportAttackBuff, 0, FRAME_CAP);
+    const manualBattleDamageBonus = clamp(input.battleDamageBonus, 0, FRAME_CAP);
+    const manualSupportDamageBonus = clamp(input.supportDamageBonus, 0, FRAME_CAP);
+    const manualDefenseDebuff = clamp(input.defenseDebuff, 0, FRAME_CAP);
+
+    const battleAttackBuff = clamp(manualBattleAttackBuff + automatic.battleAttackBuff, 0, FRAME_CAP);
+    const supportAttackBuff = clamp(manualSupportAttackBuff + automatic.supportAttackBuff, 0, FRAME_CAP);
+    const battleDamageBonus = clamp(manualBattleDamageBonus + automatic.battleDamageBonus, 0, FRAME_CAP);
+    const supportDamageBonus = clamp(manualSupportDamageBonus + automatic.supportDamageBonus, 0, FRAME_CAP);
+    const defenseDebuff = clamp(manualDefenseDebuff + automatic.defenseDebuff, 0, FRAME_CAP);
+
+    const randomMultiplier = clamp(input.randomMultiplier || 1, 0.98, 1.02);
+    const levelMultiplier = Math.max(0.01, Number(input.levelMultiplier) || 1);
+    const criticalMultiplier = input.isCritical ? 1.25 : 1;
 
     const baseAttack = skill.attackStat === "patk" ? character.patk : character.eatk;
     const adjustment = skill.attackStat === "patk" ? Number(input.patkAdjustment || 0) : Number(input.eatkAdjustment || 0);
     const attack = Math.max(1, baseAttack + adjustment);
-    const buffedAttack = attack * (1 + attackBuff / 100);
+    const correctedAttack = attack * (1 + battleAttackBuff / 100) * (1 + supportAttackBuff / 100);
 
     const baseDefense = skill.attackStat === "patk" ? enemy.pdef : enemy.edef;
-    const effectiveDefense = Math.max(0, baseDefense * (1 - defenseDebuff / 100));
+    const defenseCorrection = 1 - defenseDebuff / 100;
+    const effectiveDefense = Math.max(0, baseDefense * defenseCorrection);
     const power = skill.boostPower?.[boostLevel] ?? skill.power;
+    const abilityPowerMultiplier = power / 100;
 
     const weaknessMultiplier = input.isWeakness ? 1.3 : 1;
     const breakMultiplier = input.isBroken ? 2 : 1;
-    const damageBonusMultiplier = 1 + damageBonus / 100;
+    const battleDamageMultiplier = 1 + battleDamageBonus / 100;
+    const supportDamageMultiplier = 1 + supportDamageBonus / 100;
 
-    const attackDefenseTerm = Math.max(1, buffedAttack - effectiveDefense * 0.5);
-    const rawDamagePerHit = attackDefenseTerm * (power / 100) * weaknessMultiplier * breakMultiplier * damageBonusMultiplier * randomMultiplier;
+    const attackDefenseTerm = Math.max(1, correctedAttack - (baseDefense / 2) * defenseCorrection);
+    const commonMultipliers = abilityPowerMultiplier * levelMultiplier * weaknessMultiplier * breakMultiplier * criticalMultiplier * battleDamageMultiplier * supportDamageMultiplier * randomMultiplier;
+    const rawDamagePerHit = attackDefenseTerm * commonMultipliers;
 
     const baseCap = character.baseDamageCap || 99999;
     const manualCap = Math.max(0, Number(input.capBonus || 0));
@@ -88,90 +95,61 @@ window.DamageCalculator = (() => {
 
     const firstActivationHits = createHitDamages(rawDamagePerHit, damageCap, skill.hits);
     const firstActivationDamage = firstActivationHits.reduce((sum, value) => sum + value, 0);
+    const firstActivationRawDamage = rawDamagePerHit * skill.hits;
 
     const initialShield = Math.max(0, Number(enemy.shield || 0));
     const shieldDamage = input.isWeakness && !input.isBroken ? skill.hits : 0;
     const remainingShield = Math.max(0, initialShield - shieldDamage);
     const brokeByThisSkill = !input.isBroken && initialShield > 0 && remainingShield === 0;
-
     const repeat = skill.repeat;
-    const repeatTriggered = Boolean(
-      repeat &&
-      boostLevel === Number(repeat.requiredBoostLevel ?? 3) &&
-      (input.isBroken || (repeat.includeBreakByThisSkill && brokeByThisSkill))
-    );
+    const repeatTriggered = Boolean(repeat && boostLevel === Number(repeat.requiredBoostLevel ?? 3) && (input.isBroken || (repeat.includeBreakByThisSkill && brokeByThisSkill)));
 
-    // 再発動はブレイク条件成立後なので、ブレイク倍率を適用して再計算する。
+    const repeatBreakMultiplier = repeatTriggered ? 2 : 0;
     const repeatRawDamagePerHit = repeatTriggered
-      ? attackDefenseTerm * (power / 100) * weaknessMultiplier * 2 * damageBonusMultiplier * randomMultiplier
+      ? attackDefenseTerm * abilityPowerMultiplier * levelMultiplier * weaknessMultiplier * repeatBreakMultiplier * criticalMultiplier * battleDamageMultiplier * supportDamageMultiplier * randomMultiplier
       : 0;
     const repeatedHitDamages = repeatTriggered ? createHitDamages(repeatRawDamagePerHit, damageCap, skill.hits) : [];
     const repeatedActivationDamage = repeatedHitDamages.reduce((sum, value) => sum + value, 0);
+    const repeatedActivationRawDamage = repeatRawDamagePerHit * skill.hits;
 
     const hitDamages = [...firstActivationHits, ...repeatedHitDamages];
     const totalDamage = firstActivationDamage + repeatedActivationDamage;
+    const totalRawDamage = firstActivationRawDamage + repeatedActivationRawDamage;
 
-    // 同じ技を、攻撃バフ・防御デバフ・弱点・ブレイク・ダメージアップなし、
-    // 乱数平均、再発動なしで使った場合を基準（1.00倍）とする。
-    // 実際の総ダメージを基準ダメージで割るため、ダメージ上限の影響も反映される。
-    const baselineAttackDefenseTerm = Math.max(1, attack - baseDefense * 0.5);
-    const baselineRawDamagePerHit = baselineAttackDefenseTerm * (power / 100);
+    // 基準：同じ攻撃値・威力・レベル補正、補正カテゴリなし、乱数平均、再発動なし。
+    const baselineAttackDefenseTerm = Math.max(1, attack - baseDefense / 2);
+    const baselineRawDamagePerHit = baselineAttackDefenseTerm * abilityPowerMultiplier * levelMultiplier;
+    const baselineRawDamage = baselineRawDamagePerHit * skill.hits;
     const baselineHitDamages = createHitDamages(baselineRawDamagePerHit, damageCap, skill.hits);
     const baselineDamage = baselineHitDamages.reduce((sum, value) => sum + value, 0);
-    const damageMultiplier = baselineDamage > 0 ? totalDamage / baselineDamage : 0;
-    const averageDamagePerHit = hitDamages.length > 0 ? Math.floor(totalDamage / hitDamages.length) : 0;
+
+    const damageMultiplier = baselineRawDamage > 0 ? totalRawDamage / baselineRawDamage : 0;
+    const effectiveDamageMultiplier = baselineDamage > 0 ? totalDamage / baselineDamage : 0;
+    const averageDamagePerHit = hitDamages.length ? Math.floor(totalDamage / hitDamages.length) : 0;
 
     return {
-      characterName: character.name,
-      skillName: skill.name,
+      characterName: character.name, skillName: skill.name,
       attackType: skill.attackStat === "patk" ? "物理" : "属性",
-      damageElement: skill.damageElement || skill.element || "none",
-      weaknessTypes: skill.weaknessTypes || [skill.damageElement || skill.element].filter(Boolean),
-      ignoresPerfectEvasion: Boolean(skill.ignoreEffects?.perfectEvasion),
-      ignoresPerfectGuard: Boolean(skill.ignoreEffects?.perfectGuard),
-      attack: Math.floor(attack),
-      buffedAttack: Math.floor(buffedAttack),
-      defense: Math.floor(baseDefense),
-      effectiveDefense: Math.floor(effectiveDefense),
-      power,
-      hits: skill.hits,
-      totalHits: hitDamages.length,
-      activationCount: repeatTriggered ? 2 : 1,
-      repeatTriggered,
-      firstActivationDamage,
-      repeatedActivationDamage,
-      initialShield,
-      remainingShield,
-      brokeByThisSkill,
-      damageCap,
-      rawDamagePerHit: Math.floor(rawDamagePerHit),
-      damagePerHit: hitDamages[0] || 0,
-      hitDamages,
-      totalDamage,
-      baselineDamage,
-      damageMultiplier,
-      averageDamagePerHit,
-      weaknessMultiplier,
-      breakMultiplier,
-      damageBonusMultiplier,
-      randomMultiplier,
+      attack: Math.floor(attack), correctedAttack: Math.floor(correctedAttack),
+      defense: Math.floor(baseDefense), effectiveDefense: Math.floor(effectiveDefense), defenseCorrection,
+      power, abilityPowerMultiplier, levelMultiplier, hits: skill.hits, totalHits: hitDamages.length,
+      activationCount: repeatTriggered ? 2 : 1, repeatTriggered,
+      firstActivationDamage, repeatedActivationDamage,
+      initialShield, remainingShield, brokeByThisSkill,
+      damageCap, rawDamagePerHit: Math.floor(rawDamagePerHit), damagePerHit: hitDamages[0] || 0,
+      hitDamages, totalDamage, totalRawDamage: Math.floor(totalRawDamage), baselineDamage,
+      baselineRawDamage: Math.floor(baselineRawDamage), damageMultiplier, effectiveDamageMultiplier, averageDamagePerHit,
+      weaknessMultiplier, breakMultiplier, criticalMultiplier, battleDamageMultiplier, supportDamageMultiplier, randomMultiplier,
       reachedCap: rawDamagePerHit >= damageCap || repeatRawDamagePerHit >= damageCap,
       killTurns: totalDamage > 0 ? Math.ceil(enemy.hp / totalDamage) : null,
-      isWeakness: Boolean(input.isWeakness),
-      isBroken: Boolean(input.isBroken),
-      boostLevel,
-      manualAttackBuff,
-      manualDamageBonus,
-      manualDefenseDebuff,
-      automaticAttackBuff: automatic.attackBuff,
-      automaticDamageBonus: automatic.damageBonus,
-      automaticDefenseDebuff: automatic.defenseDebuff,
-      automaticCapBonus: automatic.capBonus,
-      totalAttackBuff: attackBuff,
-      totalDamageBonus: damageBonus,
-      totalDefenseDebuff: defenseDebuff,
-      activeEffectLabels: automatic.labels,
-      deferredEffectLabels: automatic.deferredLabels
+      isWeakness: Boolean(input.isWeakness), isBroken: Boolean(input.isBroken), isCritical: Boolean(input.isCritical), boostLevel,
+      manualBattleAttackBuff, manualSupportAttackBuff, manualBattleDamageBonus, manualSupportDamageBonus, manualDefenseDebuff,
+      automaticBattleAttackBuff: automatic.battleAttackBuff, automaticSupportAttackBuff: automatic.supportAttackBuff,
+      automaticBattleDamageBonus: automatic.battleDamageBonus, automaticSupportDamageBonus: automatic.supportDamageBonus,
+      automaticDefenseDebuff: automatic.defenseDebuff, automaticCapBonus: automatic.capBonus,
+      totalBattleAttackBuff: battleAttackBuff, totalSupportAttackBuff: supportAttackBuff,
+      totalBattleDamageBonus: battleDamageBonus, totalSupportDamageBonus: supportDamageBonus,
+      totalDefenseDebuff: defenseDebuff, activeEffectLabels: automatic.labels, deferredEffectLabels: automatic.deferredLabels
     };
   }
 
@@ -185,6 +163,5 @@ window.DamageCalculator = (() => {
     });
     return best;
   }
-
   return { calculate, findBestForCharacter, summarizeEffects };
 })();
