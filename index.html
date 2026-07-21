@@ -10,9 +10,9 @@
   <header class="app-header">
     <div>
       <h1>オクトラ大陸の覇者 最大ダメージシミュレーター</h1>
-      <p>強化版：キャラ固有効果・技効果・弱点・ブレイク・ダメージ上限対応</p>
+      <p>強化版：キャラ・技効果、シールド、条件付き再発動、ダメージ上限対応</p>
     </div>
-    <span class="version">v0.2.0</span>
+    <span class="version">v0.3.0</span>
   </header>
 
   <main class="layout">
@@ -126,6 +126,11 @@
           <label>
             防御デバフ（%）
             <input id="defense-debuff" type="number" value="0" min="0" max="100" step="1">
+          </label>
+
+          <label>
+            敵シールド（攻撃開始時）
+            <input id="enemy-shield" type="number" value="4" min="0" step="1">
           </label>
 
           <label class="check-row">

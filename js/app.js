@@ -110,7 +110,8 @@
       enemy: {
         hp: Math.max(1, numberValue("enemy-hp")),
         pdef: Math.max(0, numberValue("enemy-pdef")),
-        edef: Math.max(0, numberValue("enemy-edef"))
+        edef: Math.max(0, numberValue("enemy-edef")),
+        shield: Math.max(0, numberValue("enemy-shield"))
       },
       patkAdjustment: numberValue("patk-adjustment"),
       eatkAdjustment: numberValue("eatk-adjustment"),
@@ -150,8 +151,27 @@
 
   function renderResult(result, isBestSearch) {
     const hitItems = result.hitDamages
-      .map((damage, index) => `<li>${index + 1}ヒット目：${damage.toLocaleString()}</li>`)
+      .map((damage, index) => {
+        const activation = index < result.hits ? "1回目" : "再発動";
+        const hitNumber = (index % result.hits) + 1;
+        return `<li>${activation} ${hitNumber}ヒット目：${damage.toLocaleString()}</li>`;
+      })
       .join("");
+
+    const repeatHtml = result.repeatTriggered
+      ? `<div class="repeat-result"><strong>再発動あり</strong>：${result.firstActivationDamage.toLocaleString()} + ${result.repeatedActivationDamage.toLocaleString()}</div>`
+      : `<div>再発動：なし</div>`;
+
+    const specialHtml = result.skillName.includes("バハムート")
+      ? `<div class="special-details">
+          <strong>バハムート特殊判定</strong><br>
+          ダメージ属性：火 / 弱点判定：火・氷・雷・風・光・闇<br>
+          完全回避・完全防御：無視<br>
+          開始シールド：${result.initialShield} → 攻撃後：${result.remainingShield}<br>
+          この技でブレイク：${result.brokeByThisSkill ? "はい" : "いいえ"}<br>
+          発動回数：${result.activationCount}回 / 合計ヒット：${result.totalHits}回
+        </div>`
+      : "";
 
     $("damage-result").innerHTML = `
       ${isBestSearch ? '<div class="result-good">最大候補を自動検索しました</div>' : ""}
@@ -164,7 +184,9 @@
       <div>敵防御：${result.defense.toLocaleString()} → ${result.effectiveDefense.toLocaleString()}</div>
       <div>防御デバフ：手動${result.manualDefenseDebuff}% + 自動${result.automaticDefenseDebuff}% = ${result.totalDefenseDebuff}%</div>
       <div>威力：${result.power} × ${result.hits}ヒット</div>
-      <div>弱点：${result.isWeakness ? "あり" : "なし"} / ブレイク：${result.isBroken ? "あり" : "なし"}</div>
+      <div>弱点：${result.isWeakness ? "あり" : "なし"} / 開始時ブレイク：${result.isBroken ? "あり" : "なし"}</div>
+      ${repeatHtml}
+      ${specialHtml}
       <div>自動上限加算：+${result.automaticCapBonus.toLocaleString()}</div>
       <div>1ヒット上限：${result.damageCap.toLocaleString()}</div>
       <div class="applied-effects"><strong>自動適用：</strong>${result.activeEffectLabels.length ? result.activeEffectLabels.join(" / ") : "なし"}</div>
@@ -175,5 +197,4 @@
       <div>同条件の理論撃破回数：${result.killTurns?.toLocaleString() ?? "-"}回</div>
       <ul class="hit-list">${hitItems}</ul>
     `;
-  }
-})();
+  }})();

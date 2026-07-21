@@ -17,10 +17,23 @@ window.SKILLS = {
   },
   yuna_bahamut: {
     id: "yuna_bahamut", characterId: "yuna", name: "極召喚：バハムート",
-    attackStat: "eatk", element: "none", weaponType: null, power: 120, hits: 5,
-    boostPower: {0: 120, 1: 140, 2: 170, 3: 210}, capMultiplier: 2,
+    attackStat: "eatk", element: "fire", damageElement: "fire", weaponType: null,
+    power: 105, hits: 4, target: "allEnemies",
+    boostPower: {0: 105, 1: 115, 2: 150, 3: 200}, capMultiplier: 1,
+    weaknessTypes: ["fire", "ice", "lightning", "wind", "light", "dark"],
+    ignoreEffects: { perfectEvasion: true, perfectGuard: true },
+    repeat: {
+      type: "repeatSameSkill",
+      maxRepeats: 1,
+      consumeSp: false,
+      requiredBoostLevel: 3,
+      requiresAnyBrokenEnemy: true,
+      includeBreakByThisSkill: true
+    },
     effects: [
-      { type: "capMultiplier", value: 2, timing: "current", label: "この攻撃のダメージ上限2倍" }
+      { type: "multiWeakness", timing: "current", label: "火・氷・雷・風・光・闇弱点を突ける（計算属性は火）" },
+      { type: "ignoreDefenseEffects", timing: "current", label: "完全回避・完全防御を無視" },
+      { type: "repeatSameSkill", timing: "conditional", label: "BP MAX＋ブレイク時に同じ攻撃を再発動（この技でブレイクした場合も含む）" }
     ]
   },
   yuna_special: {
