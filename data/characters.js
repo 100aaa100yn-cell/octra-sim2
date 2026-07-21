@@ -6,25 +6,19 @@ window.CHARACTERS = {
     patk: 210,
     eatk: 510,
     baseDamageCap: 99999,
-    skillIds: [
-      "yuna_cure_single",
-      "yuna_esuna",
-      "yuna_summon_valefor",
-      "yuna_pray",
-      "yuna_summon_ixion",
-      "yuna_holy",
-      "yuna_fayth_blessing",
-      "yuna_summon_anima",
-      "yuna_ultima",
-      "yuna_calm_prayer"
-    ],
+    skillIds: ["yuna_valefor", "yuna_ray", "yuna_bahamut", "yuna_special"],
     passiveEffects: [
       { type: "elementDamage", target: "all", value: 15, label: "全属性ダメージアップ15%" },
       { type: "capBonus", value: 100000, label: "ダメージ上限+100,000" }
     ]
   },
   tidus: {
-    id: "tidus", name: "ティーダ", job: "剣士", patk: 535, eatk: 180, baseDamageCap: 99999,
+    id: "tidus",
+    name: "ティーダ",
+    job: "剣士",
+    patk: 535,
+    eatk: 180,
+    baseDamageCap: 99999,
     skillIds: ["tidus_spiral", "tidus_assault", "tidus_blitz", "tidus_special"],
     passiveEffects: [
       { type: "elementDamage", target: "water", value: 30, label: "水属性ダメージアップ30%" },
@@ -32,7 +26,12 @@ window.CHARACTERS = {
     ]
   },
   rikku: {
-    id: "rikku", name: "リュック", job: "盗賊", patk: 495, eatk: 230, baseDamageCap: 99999,
+    id: "rikku",
+    name: "リュック",
+    job: "盗賊",
+    patk: 495,
+    eatk: 230,
+    baseDamageCap: 99999,
     skillIds: ["rikku_drive", "rikku_nine_lives"],
     passiveEffects: [
       { type: "weaponDamage", target: "dagger", value: 10, label: "短剣ダメージアップ10%" },

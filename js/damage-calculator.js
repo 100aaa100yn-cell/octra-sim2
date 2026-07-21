@@ -83,7 +83,7 @@ window.DamageCalculator = (() => {
 
     const baseCap = character.baseDamageCap || 99999;
     const manualCap = Math.max(0, Number(input.capBonus || 0));
-    const capBonus = manualCap + automatic.capBonus + Number(skill.skillCapBonus || 0);
+    const capBonus = manualCap + automatic.capBonus;
     const damageCap = Math.floor((baseCap + capBonus) * (skill.capMultiplier || 1));
 
     const firstActivationHits = createHitDamages(rawDamagePerHit, damageCap, skill.hits);
@@ -110,6 +110,16 @@ window.DamageCalculator = (() => {
 
     const hitDamages = [...firstActivationHits, ...repeatedHitDamages];
     const totalDamage = firstActivationDamage + repeatedActivationDamage;
+
+    // 同じ技を、攻撃バフ・防御デバフ・弱点・ブレイク・ダメージアップなし、
+    // 乱数平均、再発動なしで使った場合を基準（1.00倍）とする。
+    // 実際の総ダメージを基準ダメージで割るため、ダメージ上限の影響も反映される。
+    const baselineAttackDefenseTerm = Math.max(1, attack - baseDefense * 0.5);
+    const baselineRawDamagePerHit = baselineAttackDefenseTerm * (power / 100);
+    const baselineHitDamages = createHitDamages(baselineRawDamagePerHit, damageCap, skill.hits);
+    const baselineDamage = baselineHitDamages.reduce((sum, value) => sum + value, 0);
+    const damageMultiplier = baselineDamage > 0 ? totalDamage / baselineDamage : 0;
+    const averageDamagePerHit = hitDamages.length > 0 ? Math.floor(totalDamage / hitDamages.length) : 0;
 
     return {
       characterName: character.name,
@@ -138,6 +148,13 @@ window.DamageCalculator = (() => {
       damagePerHit: hitDamages[0] || 0,
       hitDamages,
       totalDamage,
+      baselineDamage,
+      damageMultiplier,
+      averageDamagePerHit,
+      weaknessMultiplier,
+      breakMultiplier,
+      damageBonusMultiplier,
+      randomMultiplier,
       reachedCap: rawDamagePerHit >= damageCap || repeatRawDamagePerHit >= damageCap,
       killTurns: totalDamage > 0 ? Math.ceil(enemy.hp / totalDamage) : null,
       isWeakness: Boolean(input.isWeakness),

@@ -316,3 +316,39 @@ button:hover { filter: brightness(.96); }
   .skill-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .boost-grid, .duration-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+
+/* v0.4.2: 計算結果のダメージ倍率表示 */
+.damage-multiplier-card {
+  margin: 0 0 12px;
+  padding: 12px 10px;
+  border: 1px solid #d6a928;
+  border-radius: 9px;
+  background: linear-gradient(180deg, #40330f, #211b0b);
+  text-align: center;
+  box-shadow: inset 0 0 18px #ffd70018, 0 0 12px #ffd70022;
+}
+.damage-multiplier-label {
+  display: block;
+  color: #f8e7a0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: .08em;
+}
+.damage-multiplier {
+  display: block;
+  margin: 1px 0;
+  color: #ffd700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 38px;
+  font-weight: 900;
+  line-height: 1.15;
+  text-shadow: 0 0 5px #ffec80, 0 0 12px #ffb700;
+}
+.damage-multiplier-card small {
+  display: block;
+  color: #d7c98d;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-size: 10px;
+}
