@@ -83,7 +83,7 @@ window.DamageCalculator = (() => {
 
     const baseCap = character.baseDamageCap || 99999;
     const manualCap = Math.max(0, Number(input.capBonus || 0));
-    const capBonus = manualCap + automatic.capBonus;
+    const capBonus = manualCap + automatic.capBonus + Number(skill.skillCapBonus || 0);
     const damageCap = Math.floor((baseCap + capBonus) * (skill.capMultiplier || 1));
 
     const firstActivationHits = createHitDamages(rawDamagePerHit, damageCap, skill.hits);
