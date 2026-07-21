@@ -10,9 +10,9 @@
   <header class="app-header">
     <div>
       <h1>オクトラ大陸の覇者 最大ダメージシミュレーター</h1>
-      <p>初期版：8人編成・単体アビリティ・弱点・ブレイク・ダメージ上限対応</p>
+      <p>強化版：キャラ固有効果・技効果・弱点・ブレイク・ダメージ上限対応</p>
     </div>
-    <span class="version">v0.1.0</span>
+    <span class="version">v0.2.0</span>
   </header>
 
   <main class="layout">
@@ -30,6 +30,23 @@
 
       <div class="box">
         <h2>攻撃設定：<span id="selected-character-name">-</span></h2>
+
+        <div class="effect-grid">
+          <div class="effect-panel">
+            <h3>キャラクター固有効果</h3>
+            <div id="character-effects" class="effect-list"></div>
+          </div>
+          <div class="effect-panel">
+            <h3>選択アビリティ効果</h3>
+            <div id="skill-effects" class="effect-list"></div>
+          </div>
+        </div>
+
+        <label class="effect-toggle">
+          <input id="apply-after-effects" type="checkbox">
+          「行動後に付与」の技効果も今回の攻撃へ仮適用する
+        </label>
+        <p class="hint">通常はOFFです。次の攻撃を想定して比較するときだけONにしてください。</p>
 
         <div class="form-grid">
           <label>

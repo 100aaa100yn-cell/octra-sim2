@@ -3,12 +3,82 @@ window.DamageCalculator = (() => {
     return Math.min(Math.max(Number(value) || 0, min), max);
   }
 
+  function collectAutomaticEffects(character, skill, applyAfterEffects) {
+    const activeEffects = [...(character.passiveEffects || [])];
+    const deferredEffects = [];
+
+    (skill.effects || []).forEach((effect) => {
+      if (effect.timing === "current" || applyAfterEffects) {
+        activeEffects.push(effect);
+      } else {
+        deferredEffects.push(effect);
+      }
+    });
+
+    return { activeEffects, deferredEffects };
+  }
+
+  function summarizeEffects({ character, skill, applyAfterEffects }) {
+    const { activeEffects, deferredEffects } = collectAutomaticEffects(character, skill, applyAfterEffects);
+    const summary = {
+      attackBuff: 0,
+      damageBonus: 0,
+      defenseDebuff: 0,
+      capBonus: 0,
+      labels: [],
+      deferredLabels: deferredEffects.map((effect) => effect.label)
+    };
+
+    activeEffects.forEach((effect) => {
+      if (effect.type === "attackBuff" && effect.target === skill.attackStat) {
+        summary.attackBuff += Number(effect.value) || 0;
+        summary.labels.push(effect.label);
+      }
+
+      if (effect.type === "weaponDamage" && effect.target === skill.weaponType) {
+        summary.damageBonus += Number(effect.value) || 0;
+        summary.labels.push(effect.label);
+      }
+
+      if (effect.type === "elementDamage" && (effect.target === "all" || effect.target === skill.element)) {
+        summary.damageBonus += Number(effect.value) || 0;
+        summary.labels.push(effect.label);
+      }
+
+      if (effect.type === "defenseDebuff") {
+        const matchesDefense =
+          (skill.attackStat === "patk" && effect.target === "pdef") ||
+          (skill.attackStat === "eatk" && effect.target === "edef");
+        if (matchesDefense) {
+          summary.defenseDebuff += Number(effect.value) || 0;
+          summary.labels.push(effect.label);
+        }
+      }
+
+      if (effect.type === "capBonus") {
+        summary.capBonus += Number(effect.value) || 0;
+        summary.labels.push(effect.label);
+      }
+    });
+
+    return summary;
+  }
+
   function calculate(input) {
     const { character, skill, enemy } = input;
     const boostLevel = clamp(input.boostLevel, 0, 3);
-    const attackBuff = clamp(input.attackBuff, 0, 300);
-    const damageBonus = clamp(input.damageBonus, 0, 300);
-    const defenseDebuff = clamp(input.defenseDebuff, 0, 100);
+    const automatic = summarizeEffects({
+      character,
+      skill,
+      applyAfterEffects: Boolean(input.applyAfterEffects)
+    });
+
+    const manualAttackBuff = clamp(input.attackBuff, 0, 300);
+    const manualDamageBonus = clamp(input.damageBonus, 0, 300);
+    const manualDefenseDebuff = clamp(input.defenseDebuff, 0, 100);
+    const attackBuff = clamp(manualAttackBuff + automatic.attackBuff, 0, 300);
+    const damageBonus = clamp(manualDamageBonus + automatic.damageBonus, 0, 300);
+    const defenseDebuff = clamp(manualDefenseDebuff + automatic.defenseDebuff, 0, 100);
     const randomMultiplier = Number(input.randomMultiplier) || 1;
 
     const baseAttack = skill.attackStat === "patk" ? character.patk : character.eatk;
@@ -34,9 +104,9 @@ window.DamageCalculator = (() => {
       * randomMultiplier;
 
     const baseCap = character.baseDamageCap || 99999;
-    const passiveCap = character.passiveCapBonus || 0;
     const manualCap = Math.max(0, Number(input.capBonus || 0));
-    const damageCap = Math.floor((baseCap + passiveCap + manualCap) * (skill.capMultiplier || 1));
+    const capBonus = manualCap + automatic.capBonus;
+    const damageCap = Math.floor((baseCap + capBonus) * (skill.capMultiplier || 1));
 
     const hitDamages = Array.from({ length: skill.hits }, () => Math.min(Math.floor(rawDamagePerHit), damageCap));
     const totalDamage = hitDamages.reduce((sum, value) => sum + value, 0);
@@ -60,7 +130,19 @@ window.DamageCalculator = (() => {
       killTurns: totalDamage > 0 ? Math.ceil(enemy.hp / totalDamage) : null,
       isWeakness: Boolean(input.isWeakness),
       isBroken: Boolean(input.isBroken),
-      boostLevel
+      boostLevel,
+      manualAttackBuff,
+      manualDamageBonus,
+      manualDefenseDebuff,
+      automaticAttackBuff: automatic.attackBuff,
+      automaticDamageBonus: automatic.damageBonus,
+      automaticDefenseDebuff: automatic.defenseDebuff,
+      automaticCapBonus: automatic.capBonus,
+      totalAttackBuff: attackBuff,
+      totalDamageBonus: damageBonus,
+      totalDefenseDebuff: defenseDebuff,
+      activeEffectLabels: automatic.labels,
+      deferredEffectLabels: automatic.deferredLabels
     };
   }
 
@@ -85,5 +167,5 @@ window.DamageCalculator = (() => {
     return best;
   }
 
-  return { calculate, findBestForCharacter };
+  return { calculate, findBestForCharacter, summarizeEffects };
 })();

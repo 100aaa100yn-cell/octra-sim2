@@ -11,6 +11,8 @@
     updateAttackPanel();
     $("calculate-button").addEventListener("click", calculateSelectedSkill);
     $("find-best-button").addEventListener("click", findBestSkill);
+    $("skill-selector").addEventListener("change", updateEffectPanels);
+    $("apply-after-effects").addEventListener("change", updateEffectPanels);
   });
 
   function renderParty() {
@@ -48,7 +50,8 @@
       const character = window.CHARACTERS[slot.characterId];
       const summary = document.createElement("div");
       summary.className = "char-summary";
-      summary.innerHTML = `職業：${character.job}<br>物攻：${character.patk.toLocaleString()}<br>属攻：${character.eatk.toLocaleString()}`;
+      const passiveText = (character.passiveEffects || []).map((effect) => effect.label).join(" / ") || "なし";
+      summary.innerHTML = `職業：${character.job}<br>物攻：${character.patk.toLocaleString()}<br>属攻：${character.eatk.toLocaleString()}<br><span class="mini-effect">固有：${passiveText}</span>`;
 
       card.append(label, selector, summary);
       (isFront ? front : back).appendChild(card);
@@ -74,6 +77,28 @@
       option.textContent = `${skill.name}（威力${skill.power} × ${skill.hits}）`;
       selector.appendChild(option);
     });
+    updateEffectPanels();
+  }
+
+
+  function renderEffectList(containerId, effects, emptyText) {
+    const container = $(containerId);
+    if (!effects || effects.length === 0) {
+      container.innerHTML = `<span class="effect-empty">${emptyText}</span>`;
+      return;
+    }
+
+    container.innerHTML = effects.map((effect) => {
+      const timing = effect.timing === "after" ? '<span class="timing-badge">行動後</span>' : '';
+      return `<div class="effect-chip">${effect.label}${timing}</div>`;
+    }).join("");
+  }
+
+  function updateEffectPanels() {
+    const character = getSelectedCharacter();
+    const skill = window.SKILLS[$("skill-selector").value];
+    renderEffectList("character-effects", character.passiveEffects || [], "固有効果なし");
+    renderEffectList("skill-effects", skill?.effects || [], "追加効果なし");
   }
 
   function getSelectedCharacter() {
@@ -95,7 +120,8 @@
       defenseDebuff: numberValue("defense-debuff"),
       randomMultiplier: numberValue("random-selector"),
       isWeakness: $("is-weakness").checked,
-      isBroken: $("is-broken").checked
+      isBroken: $("is-broken").checked,
+      applyAfterEffects: $("apply-after-effects").checked
     };
   }
 
@@ -133,10 +159,16 @@
       <div>ブースト：${result.boostLevel === 3 ? "MAX" : result.boostLevel}</div>
       <div>攻撃種別：${result.attackType}</div>
       <div>使用攻撃値：${result.attack.toLocaleString()} → ${result.buffedAttack.toLocaleString()}</div>
+      <div>攻撃バフ：手動${result.manualAttackBuff}% + 自動${result.automaticAttackBuff}% = ${result.totalAttackBuff}%</div>
+      <div>ダメージアップ：手動${result.manualDamageBonus}% + 自動${result.automaticDamageBonus}% = ${result.totalDamageBonus}%</div>
       <div>敵防御：${result.defense.toLocaleString()} → ${result.effectiveDefense.toLocaleString()}</div>
+      <div>防御デバフ：手動${result.manualDefenseDebuff}% + 自動${result.automaticDefenseDebuff}% = ${result.totalDefenseDebuff}%</div>
       <div>威力：${result.power} × ${result.hits}ヒット</div>
       <div>弱点：${result.isWeakness ? "あり" : "なし"} / ブレイク：${result.isBroken ? "あり" : "なし"}</div>
+      <div>自動上限加算：+${result.automaticCapBonus.toLocaleString()}</div>
       <div>1ヒット上限：${result.damageCap.toLocaleString()}</div>
+      <div class="applied-effects"><strong>自動適用：</strong>${result.activeEffectLabels.length ? result.activeEffectLabels.join(" / ") : "なし"}</div>
+      ${result.deferredEffectLabels.length ? `<div class="deferred-effects"><strong>今回未適用（行動後）：</strong>${result.deferredEffectLabels.join(" / ")}</div>` : ""}
       <div>上限判定：<span class="${result.reachedCap ? "result-warn" : "result-good"}">${result.reachedCap ? "到達" : "未到達"}</span></div>
       <hr>
       <div class="result-total">${result.totalDamage.toLocaleString()} damage</div>

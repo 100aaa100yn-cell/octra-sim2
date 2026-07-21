@@ -6,8 +6,11 @@ window.CHARACTERS = {
     patk: 210,
     eatk: 510,
     baseDamageCap: 99999,
-    passiveCapBonus: 100000,
-    skillIds: ["yuna_valefor", "yuna_ray", "yuna_bahamut", "yuna_special"]
+    skillIds: ["yuna_valefor", "yuna_ray", "yuna_bahamut", "yuna_special"],
+    passiveEffects: [
+      { type: "elementDamage", target: "all", value: 15, label: "全属性ダメージアップ15%" },
+      { type: "capBonus", value: 100000, label: "ダメージ上限+100,000" }
+    ]
   },
   tidus: {
     id: "tidus",
@@ -16,8 +19,11 @@ window.CHARACTERS = {
     patk: 535,
     eatk: 180,
     baseDamageCap: 99999,
-    passiveCapBonus: 50000,
-    skillIds: ["tidus_spiral", "tidus_assault", "tidus_blitz", "tidus_special"]
+    skillIds: ["tidus_spiral", "tidus_assault", "tidus_blitz", "tidus_special"],
+    passiveEffects: [
+      { type: "elementDamage", target: "water", value: 30, label: "水属性ダメージアップ30%" },
+      { type: "capBonus", value: 50000, label: "ダメージ上限+50,000" }
+    ]
   },
   rikku: {
     id: "rikku",
@@ -26,7 +32,10 @@ window.CHARACTERS = {
     patk: 495,
     eatk: 230,
     baseDamageCap: 99999,
-    passiveCapBonus: 30000,
-    skillIds: ["rikku_drive", "rikku_nine_lives"]
+    skillIds: ["rikku_drive", "rikku_nine_lives"],
+    passiveEffects: [
+      { type: "weaponDamage", target: "dagger", value: 10, label: "短剣ダメージアップ10%" },
+      { type: "capBonus", value: 30000, label: "ダメージ上限+30,000" }
+    ]
   }
 };
