@@ -1,157 +1,20 @@
-<!DOCTYPE html>
-<html lang="ja">
-<head>
-    <meta charset="UTF-8">
-    <title>オクトラ FF10コラボ対応8人シミュレーター</title>
-    <style>
-        body { font-family: sans-serif; margin: 15px; background: #f0f0f0; color: #333; font-size: 13px; }
-        .layout { display: grid; grid-template-columns: 1fr 420px; gap: 15px; }
-        .box { background: white; padding: 12px; border-radius: 8px; margin-bottom: 12px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        h2 { font-size: 15px; margin-top: 0; border-bottom: 2px solid #007bff; padding-bottom: 3px; margin-bottom: 10px; }
-        
-        /* 8人パーティー配置 */
-        .party-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 10px; }
-        .char-card { border: 2px solid #ccc; border-radius: 6px; padding: 8px; background: #f8f9fa; cursor: pointer; }
-        .char-card.active-front { border-color: #007bff; background: #e7f1ff; }
-        .char-card.active-back { border-color: #17a2b8; background: #e0f7fa; }
-        .char-pos { font-size: 10px; font-weight: bold; color: #777; }
-        
-        button.action-btn { display: block; width: 100%; text-align: left; padding: 8px; font-size: 12px; cursor: pointer; background: #fff; border: 1px solid #ddd; border-radius: 4px; margin-bottom: 4px; }
-        button.action-btn:hover { background: #f1f3f5; }
-        .btn-atk { border-left: 4px solid #dc3545; }
-        .btn-buff { border-left: 4px solid #28a745; }
-        .btn-sp { border-left: 4px solid #ffc107; }
-        .btn-swap { text-align: center !important; background: #e7f1ff !important; border: 1px solid #007bff !important; font-weight: bold; color: #007bff; }
-        
-        .log { background: #333; color: #fff; padding: 12px; border-radius: 4px; font-family: monospace; height: 580px; overflow-y: scroll; font-size: 12px; line-height: 1.5; }
-        .badge { padding: 2px 5px; border-radius: 3px; font-size: 10px; font-weight: bold; display: inline-block; margin-top: 2px; margin-right: 2px; background: #e2e3e5; color: #333; }
-        .badge-active { background: #dc3545; color: white; }
-        .badge-blue { background: #007bff; color: white; }
-        .badge-yellow { background: #ffc107; color: #222; }
-        
-        select.char-selector { width: 100%; padding: 4px; font-weight: bold; border-radius: 4px; border: 1px solid #ccc; margin-bottom: 5px; }
-    </style>
-</head>
-<body>
-
-    <h1>オクトラ 8人編成固有キャラシミュレーター (ターン: <span id="global-turn">1</span>)</h1>
-
-    <div class="layout">
-        <!-- 左側：パーティー編成と行動コマンド -->
-        <div>
-            <p style="margin:0 0 4px 0; font-weight:bold; color:#007bff;">【前衛スロット】 ※クリックして選択・行動コマンド切り替え</p>
-            <div class="party-grid">
-                <div class="char-card active-front" id="card-0" onclick="selectSlot(0)">
-                    <div class="char-pos">第1列・前衛</div>
-                    <select id="sel-0" class="char-selector" onchange="changeCharType(0, this.value)"><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option><option value="rikku">リュック</option></select>
-                    <div id="disp-status-0"></div>
-                </div>
-                <div class="char-card" id="card-1" onclick="selectSlot(1)">
-                    <div class="char-pos">第2列・前衛</div>
-                    <select id="sel-1" class="char-selector" onchange="changeCharType(1, this.value)"><option value="tidus">ティーダ</option><option value="yuna">ユウナ</option><option value="rikku">リュック</option></select>
-                    <div id="disp-status-1"></div>
-                </div>
-                <div class="char-card" id="card-2" onclick="selectSlot(2)">
-                    <div class="char-pos">第3列・前衛</div>
-                    <select id="sel-2" class="char-selector" onchange="changeCharType(2, this.value)"><option value="rikku">リュック</option><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option></select>
-                    <div id="disp-status-2"></div>
-                </div>
-                <div class="char-card" id="card-3" onclick="selectSlot(3)">
-                    <div class="char-pos">第4列・前衛</div>
-                    <select id="sel-3" class="char-selector" onchange="changeCharType(3, this.value)"><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option><option value="rikku">リュック</option></select>
-                    <div id="disp-status-3"></div>
-                </div>
-            </div>
-
-            <p style="margin:10px 0 4px 0; font-weight:bold; color:#17a2b8;">【後衛スロット】</p>
-            <div class="party-grid">
-                <div class="char-card" id="card-4" onclick="selectSlot(4)">
-                    <div class="char-pos">第1列・後衛</div>
-                    <select id="sel-4" class="char-selector" onchange="changeCharType(4, this.value)"><option value="tidus">ティーダ</option><option value="yuna">ユウナ</option><option value="rikku">リュック</option></select>
-                    <div id="disp-status-4"></div>
-                </div>
-                <div class="char-card" id="card-5" onclick="selectSlot(5)">
-                    <div class="char-pos">第2列・後衛</div>
-                    <select id="sel-5" class="char-selector" onchange="changeCharType(5, this.value)"><option value="rikku">リュック</option><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option></select>
-                    <div id="disp-status-5"></div>
-                </div>
-                <div class="char-card" id="card-6" onclick="selectSlot(6)">
-                    <div class="char-pos">第3列・後衛</div>
-                    <select id="sel-6" class="char-selector" onchange="changeCharType(6, this.value)"><option value="yuna">ユウナ</option><option value="tidus">ティーダ</option><option value="rikku">リュック</option></select>
-                    <div id="disp-status-6"></div>
-                </div>
-                <div class="char-card" id="card-7" onclick="selectSlot(7)">
-                    <div class="char-pos">第4列・後衛</div>
-                    <select id="sel-7" class="char-selector" onchange="changeCharType(7, this.value)"><option value="tidus">ティーダ</option><option value="yuna">ユウナ</option><option value="rikku">リュック</option></select>
-                    <div id="disp-status-7"></div>
-                </div>
-            </div>
-
-            <!-- アビリティ操作パネル -->
-            <div class="box">
-                <h2>固有コマンドパネル: <span id="panel-char-name" style="color:#007bff;">-</span></h2>
-                <div id="panel-sap-info" style="background:#f8f9fa; padding:6px; border-radius:4px; margin-bottom:10px; font-size:11px;"></div>
-                
-                <!-- 行動ボタンが作られるコンテナ -->
-                <div id="action-buttons-container"></div>
-
-                <button style="margin-top:10px; text-align:center; background:#6c757d; color:#fff;" class="action-btn" onclick="passTurn()">行動せずに1ターン進める</button>
-            </div>
-        </div>
-
-        <!-- 右側：戦闘ログ -->
-        <div class="box" style="height: calc(100% - 25px);">
-            <h2>戦闘ログ (仮想敵防御力: 200 / 弱点補正: 1.3倍固定)</h2>
-            <div id="battle-log" class="log"></div>
-        </div>
-    </div>
-
-    <script>
-        let currentTurn = 1;
-        let selectedIndex = 0; // 現在選択中のマス（0〜7）
-
-        // 全体フィールドバフ
-        let globalBuffs = {
-            specialAtkBuffTurns: 0,
-            specialCapBuffTurns: 0
-        };
-
-        // キャラクター固有データマスター
-        const characterMaster = {
-            yuna: {
-                name: "ユウナ", atk: 510, type: "属攻",
-                sapText: "【サポアビ】常時全属性弱点突き / ダメージ上限+10万",
-                sapCap: 100000, sapBuff: 15,
-                skills: [
-                    { category: "battle", type: "atk", name: "風 召喚：ヴァルファーレ", power: 65, hits: 3, effect: "valefor_trigger", desc: "威力65×3 / 自身に行動後風追撃付与(2T)" },
-                    { category: "battle", type: "buff", name: "励声の光線", power: 45, hits: 4, effect: "yuna_buff", desc: "威力45×4 / 自身に属攻バフ15%付与(2T)" },
-                    { category: "ex", type: "atk", name: "極召喚：バハムート", power: 120, hits: 5, effect: "bahamut_trigger", desc: "威力120×5 / 行動後無追撃付与(2T) / この攻撃のみ上限2倍" },
-                    { category: "special", type: "sp", name: "異送り", power: 500, hits: 1, effect: "yuna_special", desc: "威力500×1 / 味方全体に属攻+20%・上限+10万(3T)を展開" }
-                ]
-            },
-            tidus: {
-                name: "ティーダ", atk: 535, type: "物攻",
-                sapText: "【サポアビ】水属性ダメージアップ+30% / ダメージ上限+5万",
-                sapCap: 50000, sapBuff: 30,
-                skills: [
-                    { category: "battle", type: "atk", name: "スパイラルカット", power: 260, hits: 1, effect: "none", desc: "威力260×1 / 単発高火力水物理攻撃" },
-                    { category: "battle", type: "atk", name: "チャージ＆アサルト", power: 45, hits: 5, effect: "tidus_buff", desc: "威力45×5 / 自身に物攻バフ15%付与(2T)" },
-                    { category: "ex", type: "atk", name: "エースオブザブリッツ", power: 85, hits: 9, effect: "none", desc: "威力85×9 / 驚異の9連撃物理アタック" },
-                    { category: "special", type: "sp", name: "エナジーレイン", power: 440, hits: 1, effect: "none", desc: "威力440×1 / 高威力必殺技" }
-                ]
-            },
-            rikku: {
-                name: "リュック", atk: 495, type: "物攻",
-                sapText: "【サポアビ】攻撃時まれに物防・属防15%ダウン付与 / ダメージ上限+3万",
-                sapCap: 30000, sapBuff: 10,
-                skills: [
-                    { category: "battle", type: "atk", name: "ドライブパスカット", power: 55, hits: 4, effect: "rikku_debuff", desc: "威力55×4 / 敵に物防15%ダウンを強制付与(2T)" },
-                    { category: "battle", type: "buff", name: "調合：ハイポーション", power: 0, hits: 0, effect: "rikku_heal", desc: "味方全体の体力を中回復＋状態異常を治療" },
-                    { category: "ex", type: "atk", name: "ナインライヴス", power: 30, hits: 9, effect: "none", desc: "威力30×9 / 敵のシールドを激しく削り取る短剣攻撃" },
-                    { category: "special", type: "sp", name: "マイティガードG", power: 0, hits: 0, effect: "rikku_special", desc: "味方全体に物理・属性防御20%UP＋自動回復を付与(3T)" }
-                ]
-            }
-        };
-
-        // 8つのスロット状態（初期化）
-        let partySlots = [
+function calculateSkillDamage({
+    attacker,
+    skill,
+    enemy,
+    buffs,
+    debuffs,
+    boostLevel,
+    damageCap
+}) {
+    // 1. 使用する物攻・属攻を決定
+    // 2. アビリティ威力を決定
+    // 3. 攻撃バフを適用
+    // 4. 敵防御・防御デバフを適用
+    // 5. 武器・属性ダメージ補正を適用
+    // 6. 弱点・ブレイク補正を適用
+    // 7. 特殊倍率を適用
+    // 8. 乱数の最大値を適用
+    // 9. 1ヒットごとのダメージ上限を適用
+    // 10. 追撃・再発動を追加
+}
