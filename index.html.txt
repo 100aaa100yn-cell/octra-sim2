@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>オクトラ ダメージシミュレーター</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background: #f0f0f0; }
+        .box { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        button { padding: 10px 15px; font-size: 16px; cursor: pointer; background: #007bff; color: white; border: none; border-radius: 4px; }
+        button:hover { background: #0056b3; }
+        .log { background: #333; color: #fff; padding: 15px; border-radius: 4px; font-family: monospace; height: 200px; overflow-y: scroll; }
+    </style>
+</head>
+<body>
+
+    <h1>オクトラ ターン管理シミュレーター</h1>
+
+    <div class="box">
+        <h2>現在のステータス (ターン: <span id="current-turn">1</span>)</h2>
+        <p>ユウナの属攻: <strong>500</strong></p>
+        <p>必殺技バフの残りターン: <span id="special-buff-turns">0</span> (効果: 属攻+20% / ダメージ上限+10万)</p>
+        <p>召喚追撃の残りターン: <span id="summon-turns">0</span> (効果: 行動後に風属性の追撃発生)</p>
+    </div>
+
+    <div class="box">
+        <h2>行動選択</h2>
+        <button onclick="useAction('normal')">通常攻撃を行う</button>
+        <button onclick="useAction('special')" style="background-color: #dc3545;">必殺技「異送り」</button>
+        <button onclick="useAction('valefor')" style="background-color: #28a745;">風 召喚：ヴァルファーレ</button>
+    </div>
+
+    <div class="box">
+        <h2>戦闘ログ</h2>
+        <div id="battle-log" class="log"></div>
+    </div>
+
+    <script>
+        // --- 1. データ構造（初期状態） ---
+        let currentTurn = 1;
+        let yuna = {
+            baseAtk: 500,
+            turns: {
+                specialBuff: 0,  // 必殺技バフの残りターン
+                summonValefor: 0 // 召喚追撃の残りターン
+            }
+        };
+
+        // 画面の数値を最新の状態に更新する関数
+        function updateUI() {
+            document.getElementById('current-turn').textContent = currentTurn;
+            document.getElementById('special-buff-turns').textContent = yuna.turns.specialBuff;
+            document.getElementById('summon-turns').textContent = yuna.turns.summonValefor;
+        }
+
+        // ログを画面に追加する関数
+        function addLog(text) {
+            const logBox = document.getElementById('battle-log');
+            logBox.innerHTML += `[ターン ${currentTurn}] ${text}<br>`;
+            logBox.scrollTop = logBox.scrollHeight; // 常に最新のログにスクロール
+        }
+
+        // --- 2. メインの処理ロジック ---
+        function useAction(actionType) {
+            let logText = "";
+            let baseDamage = 10000; // 簡易的な基本ダメージの土台
+            let damageCap = 99999;  // 通常のダメージ上限
+
+            // 【ステップA】行動ごとの固有処理（バフの付与など）
+            if (actionType === 'special') {
+                logText += "ユウナは必殺技「異送り」を発動！ ";
+                yuna.turns.specialBuff = 3; // 必殺バフを3ターン付与
+                baseDamage = 25000;         // 必殺技は高威力
+            } else if (actionType === 'valefor') {
+                logText += "ユウナは「風 召喚：ヴァルファーレ」を唱えた！ ";
+                yuna.turns.summonValefor = 2; // 追撃バフを2ターン付与
+                baseDamage = 15000;
+            } else {
+                logText += "ユウナの通常攻撃。 ";
+            }
+
+            // 【ステップB】現在かかっているバフの判定
+            // 必殺バフが残っている場合
+            if (yuna.turns.specialBuff > 0) {
+                baseDamage = baseDamage * 1.2; // 属攻+20%の簡易乗算
+                damageCap += 100000;          // ダメージ上限を+10万
+                logText += "(必殺技バフ適用中) ";
+            }
+
+            // 【ステップC】ダメージの上限（カンスト）判定
+            let finalDamage = Math.min(baseDamage, damageCap);
+            logText += `敵に **${Math.floor(finalDamage)}** のダメージを与えた。`;
+
+            // 【ステップD】召喚追撃の判定（行動後にバフが残っていれば発生）
+            if (yuna.turns.summonValefor > 0) {
+                let summonDamage = 5000;
+                if (yuna.turns.specialBuff > 0) summonDamage *= 1.2; // 追撃にも必殺バフが乗る
+                logText += `<br> ➔ [追撃発動] ヴァルファーレが風属性攻撃！ **${Math.floor(summonDamage)}** のダメージ！`;
+            }
+
+            // ログの出力
+            addLog(logText);
+
+            // 【ステップE】ターン終了処理（カウントダウン）
+            // 1以上の場合はターン数を1減らす（0未満にはしない）
+            if (yuna.turns.specialBuff > 0) yuna.turns.specialBuff--;
+            if (yuna.turns.summonValefor > 0) yuna.turns.summonValefor--;
+
+            currentTurn++; // ターンを1進める
+            updateUI();    // 画面の表示を更新
+        }
+
+        // 初回起動時の画面更新
+        updateUI();
+    </script>
+</body>
+</html>
