@@ -8,8 +8,11 @@ window.CHARACTERS = {
     baseDamageCap: 99999,
     skillIds: ["yuna_cure", "yuna_esuna", "yuna_valefor", "yuna_pray", "yuna_ixion", "yuna_holy", "yuna_blessing", "yuna_anima", "yuna_ultima", "yuna_calm_prayer"],
     passiveEffects: [
-      { type: "elementDamage", target: "all", value: 15, label: "全属性ダメージアップ15%" },
-      { type: "capBonus", value: 100000, label: "ダメージ上限+100,000" }
+      { type: "elementResistance", targets: ["fire", "ice"], value: 10, label: "火・氷耐性強化：自身の火・氷耐性10%アップ" },
+      { type: "elementResistance", targets: ["lightning", "wind"], value: 10, label: "雷・風耐性強化：自身の雷・風耐性10%アップ" },
+      { type: "elementResistance", targets: ["light", "dark"], value: 10, label: "光・闇耐性強化：自身の光・闇耐性10%アップ" },
+      { type: "capBonus", value: 10000, label: "ダメージ上限アップ+10,000" },
+      { type: "capBonus", value: 20000, label: "ダメージ上限アップ+20,000" }
     ]
   },
   tidus: {
