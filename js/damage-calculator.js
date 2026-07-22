@@ -50,13 +50,17 @@ window.DamageCalculator = (() => {
   function calculate(input) {
     const { character, skill, enemy } = input;
     const boostLevel = clamp(input.boostLevel, 0, 3);
+    const currentTurn = Math.max(1, Number(input.currentTurn) || 1);
+    if (skill.minTurn && currentTurn < skill.minTurn) {
+      return { invalidCondition: true, characterName: character.name, skillName: skill.name, message: `${skill.name}は${skill.minTurn}ターン目以降に使用できます。現在は${currentTurn}ターン目です。` };
+    }
     if (skill.category && skill.category !== "attack") {
       return {
         nonDamage: true,
         characterName: character.name,
         skillName: skill.name,
-        categoryLabel: skill.category === "heal" ? "回復" : "補助",
-        sp: skill.sp,
+        categoryLabel: skill.abilityType === "ultimate" ? "補助・必殺技" : (skill.category === "heal" ? "回復" : "補助"),
+        sp: skill.sp, levelLabel: skill.levelLabel, activationPosition: skill.activationPosition === "back" ? "後衛" : null,
         boostLevel,
         effectLabels: (skill.effects || []).filter(effect => !effect.requiredBoostLevel || boostLevel >= effect.requiredBoostLevel).map(effect => effect.label)
       };
@@ -168,6 +172,7 @@ window.DamageCalculator = (() => {
       reachedCap: rawDamagePerHit >= damageCap || repeatRawDamagePerHit >= damageCap || followUpRawDamagePerHit >= damageCap,
       killTurns: totalDamage > 0 ? Math.ceil(enemy.hp / totalDamage) : null,
       isWeakness: Boolean(input.isWeakness), isBroken: Boolean(input.isBroken), isCritical: Boolean(input.isCritical), boostLevel,
+      boostLabel: skill.boostLabels?.[boostLevel] || null, currentTurn,
       manualBattleAttackBuff, manualSupportAttackBuff, manualBattleDamageBonus, manualSupportDamageBonus, manualDefenseDebuff,
       automaticBattleAttackBuff: automatic.battleAttackBuff, automaticSupportAttackBuff: automatic.supportAttackBuff,
       automaticBattleDamageBonus: automatic.battleDamageBonus, automaticSupportDamageBonus: automatic.supportDamageBonus,

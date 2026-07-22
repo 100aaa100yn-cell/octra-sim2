@@ -75,9 +75,10 @@
       const skill = window.SKILLS[skillId];
       const option = document.createElement("option");
       option.value = skill.id;
+      const typePrefix = skill.abilityType === "ultimate" ? "【必殺技】" : skill.abilityType === "ex" ? "【EX】" : "";
       option.textContent = skill.category === "attack"
-        ? `${skill.name}（威力${skill.power} × ${skill.hits}）`
-        : `${skill.name}（${skill.category === "heal" ? "回復" : "補助"} / SP${skill.sp ?? "-"}）`;
+        ? `${typePrefix}${skill.name}（威力${skill.power} × ${skill.hits}）`
+        : `${typePrefix}${skill.name}（${skill.category === "heal" ? "回復" : "補助"}${skill.sp != null ? ` / SP${skill.sp}` : ""}）`;
       selector.appendChild(option);
     });
     updateEffectPanels();
@@ -121,8 +122,9 @@
     const panel = $("skill-detail-panel");
     if (!skill) { panel.innerHTML = ""; return; }
 
-    const boostNames = ["BP0", "BP1", "BP2", "BP MAX"];
-    const categoryLabel = skill.category === "heal" ? "回復" : skill.category === "support" ? "補助" : "攻撃";
+    const boostNames = skill.boostLabels || ["BP0", "BP1", "BP2", "BP MAX"];
+    const categoryBase = skill.category === "heal" ? "回復" : skill.category === "support" ? "補助" : "攻撃";
+    const categoryLabel = skill.abilityType === "ultimate" ? `${categoryBase}・必殺技` : skill.abilityType === "ex" ? `${categoryBase}・EXアビリティ` : categoryBase;
     const targetLabels = {
       singleEnemy:"敵単体", allEnemies:"敵全体", singleAlly:"味方単体",
       frontAllies:"味方前衛全体", allAllies:"味方前後衛全体"
@@ -168,7 +170,7 @@
     panel.innerHTML = `
       <div class="skill-summary-grid">
         <div><span>分類</span><strong>${categoryLabel}</strong></div>
-        <div><span>消費SP</span><strong>${skill.sp ?? "—"}</strong></div>
+        <div><span>${skill.abilityType === "ultimate" ? "必殺技Lv" : "消費SP"}</span><strong>${skill.abilityType === "ultimate" ? (skill.levelLabel || "—") : (skill.sp ?? "—")}</strong></div>
         <div><span>対象</span><strong>${targetText}</strong></div>
         <div><span>属性・Hit</span><strong>${skill.category === "attack" ? `${skill.damageElement || skill.element || "無属性"} / ${skill.hits}回` : "—"}</strong></div>
       </div>
@@ -180,6 +182,9 @@
       ${skill.summon ? `<div class="skill-rule-line"><strong>召喚獣：</strong>${skill.summon}（他の召喚獣を解除）</div>` : ""}
       ${follow}
       ${skill.repeat ? '<div class="skill-rule-line repeat-rule"><strong>再発動：</strong>BP MAX＋ブレイク中（この技でブレイクした場合を含む・SP消費なし）</div>' : ""}
+      ${skill.activationPosition === "back" ? '<div class="skill-rule-line"><strong>発動位置：</strong>後衛</div>' : ""}
+      ${skill.minTurn ? `<div class="skill-rule-line"><strong>使用条件：</strong>${skill.minTurn}ターン目以降</div>` : ""}
+      ${skill.bpCosts ? `<div class="skill-rule-line"><strong>BP消費：</strong>${Object.values(skill.bpCosts).join(" / ")}</div>` : ""}
       ${skill.useLimit ? `<div class="skill-rule-line"><strong>使用制限：</strong>戦闘中${skill.useLimit}回</div>` : ""}
       <h4>効果と継続ターン</h4>
       <div class="effect-detail-list">${effectsHtml}</div>
@@ -221,7 +226,8 @@
       randomMultiplier: numberValue("random-selector"),
       isWeakness: $("is-weakness").checked,
       isBroken: $("is-broken").checked,
-      applyAfterEffects: $("apply-after-effects").checked
+      applyAfterEffects: $("apply-after-effects").checked,
+      currentTurn: Math.max(1, numberValue("current-turn"))
     };
   }
 
@@ -249,10 +255,16 @@
   }
 
   function renderResult(result, isBestSearch) {
+    if (result.invalidCondition) {
+      $("damage-result").innerHTML = `<div class="result-warn"><strong>${result.characterName} / ${result.skillName}</strong></div><div>${result.message}</div>`;
+      return;
+    }
     if (result.nonDamage) {
       $("damage-result").innerHTML = `
         <div class="result-good">${result.characterName} / ${result.skillName}</div>
         <div><strong>分類：</strong>${result.categoryLabel}</div>
+        ${result.activationPosition ? `<div><strong>発動位置：</strong>${result.activationPosition}</div>` : ""}
+        ${result.levelLabel ? `<div><strong>必殺技Lv：</strong>${result.levelLabel}</div>` : ""}
         <div><strong>消費SP：</strong>${result.sp ?? "—"}</div>
         <div><strong>BP：</strong>${result.boostLevel === 3 ? "MAX" : result.boostLevel}</div>
         <div class="applied-effects"><strong>効果：</strong>${result.effectLabels.join(" / ") || "詳細パネルを確認してください"}</div>
@@ -297,7 +309,7 @@
         <small>補正カテゴリなし・乱数平均・再発動なしを1.00倍（上限適用前）</small>
       </div>
       <div>${result.characterName} / ${result.skillName}</div>
-      <div>ブースト：${result.boostLevel === 3 ? "MAX" : result.boostLevel}</div>
+      <div>ブースト：${result.boostLabel || (result.boostLevel === 3 ? "MAX" : result.boostLevel)}</div>
       <div>攻撃種別：${result.attackType}</div>
       <div>補正攻撃力：${result.attack.toLocaleString()} → ${result.correctedAttack.toLocaleString()}</div>
       <div>攻撃バフ・バトアビ枠：手動${result.manualBattleAttackBuff}% + 自動${result.automaticBattleAttackBuff}% → 適用${result.totalBattleAttackBuff}%（上限30%）</div>

@@ -10,9 +10,9 @@
   <header class="app-header">
     <div>
       <h1>オクトラ大陸の覇者 最大ダメージシミュレーター</h1>
-      <p>精密版：枠別バフ上限、クリティカル、レベル補正、0.98〜1.02乱数対応</p>
+      <p>精密版：必殺技・EXアビリティ、召喚追撃、枠別バフ上限対応</p>
     </div>
-    <span class="version">v0.4.5</span>
+    <span class="version">v0.4.6</span>
   </header>
 
   <main class="layout">
@@ -53,6 +53,11 @@
           <label>
             アビリティ
             <select id="skill-selector"></select>
+          </label>
+
+          <label>
+            現在ターン
+            <input id="current-turn" type="number" value="3" min="1" step="1">
           </label>
 
           <label>

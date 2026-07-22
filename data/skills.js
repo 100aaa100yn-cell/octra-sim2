@@ -103,6 +103,34 @@ window.SKILLS = {
     ], notes:["戦闘中2回のみ使用可能","灯火強化前（Lv.1）は最大HP25%の自動復活のみ"]
   },
 
+
+  yuna_otherworld_sending: {
+    id:"yuna_otherworld_sending", characterId:"yuna", name:"異界送り", category:"support", abilityType:"ultimate",
+    levelLabel:"Lv.MAX", activationPosition:"back", target:"selfAndAllies",
+    effects:[
+      {type:"specialState", timing:"current", targetLabel:"自身", label:"特殊効果『異界送り』を付与（7ターン／長いターン数で上書き）", duration:7},
+      {type:"spStock", timing:"current", targetLabel:"自身とバディ", label:"SPストックを付与（使用者最大SPの100%・重複不可）"},
+      {type:"regen", value:150, timing:"current", targetLabel:"自身とバディ", label:"HP自動回復（効力150）", duration:4},
+      {type:"bpRecoveryUp", value:2, timing:"current", targetLabel:"自身とバディ", label:"BP回復量2アップ", duration:4},
+      {type:"elementDamage", target:"all", frame:"battle", value:20, timing:"current", targetLabel:"味方前後衛全体", label:"属性ダメージアップ20%", duration:3},
+      {type:"capBonus", value:100000, timing:"current", targetLabel:"味方前後衛全体", label:"ダメージ上限アップ+100,000", duration:3}
+    ],
+    specialState:{name:"異界送り", duration:7, unlocks:"マスター召喚・OD", allSummonsAvailable:true, summonReuseTurnZero:true},
+    notes:["後衛から発動","『異界送り』中は呼び出している召喚獣にかかわらず全てのマスター召喚・ODが使用可能","マスター召喚・ODの再使用Turnが0になる"]
+  },
+  yuna_bahamut_ex: {
+    id:"yuna_bahamut_ex", characterId:"yuna", name:"召喚：バハムート", category:"attack", abilityType:"ex", useLimit:4,
+    attackStat:"eatk", element:"fire", damageElement:"fire", power:180, hits:6, target:"allEnemies",
+    boostPower:{0:180,1:205,2:300,3:525}, boostLabels:["通常","Lv.2（BP1）","Lv.4（BP3）","Lv.6 MAX（BP5）"],
+    bpCosts:{0:0,1:1,2:3,3:5}, minTurn:3, capMultiplier:1, summon:"バハムート",
+    followUp:{target:"allEnemies", attackStat:"eatk", element:"fire", power:250, hitsByBoost:{0:1,1:2,2:3,3:4}},
+    effects:[
+      {type:"summon", timing:"after", targetLabel:"自身とバディ", label:"召喚獣バハムートを付与（他の召喚獣を解除）"},
+      {type:"followUp", timing:"after", targetLabel:"敵全体", label:"行動後に火追撃（威力250・ブーストLvにより1〜4回・1行動につき1回）"}
+    ],
+    notes:["使用条件：3ターン目以降","戦闘中4回まで使用可能","このアビリティ使用後にも追撃","ユウナ戦闘不能時に召喚獣効果を解除","ブレイク復帰行動前の敵はブレイク不可","BP3以上消費で追撃回数は最大"]
+  },
+
   tidus_spiral:{id:"tidus_spiral",characterId:"tidus",name:"スパイラルカット",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:260,hits:1,boostPower:{0:260,1:310,2:390,3:500},capMultiplier:1,effects:[]},
   tidus_assault:{id:"tidus_assault",characterId:"tidus",name:"チャージ＆アサルト",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:45,hits:5,boostPower:{0:45,1:55,2:65,3:80},capMultiplier:1,effects:[{type:"attackBuff",target:"patk",targetLabel:"自身",value:15,timing:"after",label:"自身に物攻アップ15%",duration:{0:2,1:3,2:4,3:5}}]},
   tidus_blitz:{id:"tidus_blitz",characterId:"tidus",name:"エースオブザブリッツ",category:"attack",attackStat:"patk",element:"water",weaponType:"sword",power:85,hits:9,boostPower:{0:85,1:95,2:110,3:130},capMultiplier:1,effects:[]},

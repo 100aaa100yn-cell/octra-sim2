@@ -6,7 +6,7 @@ window.CHARACTERS = {
     patk: 210,
     eatk: 510,
     baseDamageCap: 99999,
-    skillIds: ["yuna_cure", "yuna_esuna", "yuna_valefor", "yuna_pray", "yuna_ixion", "yuna_holy", "yuna_blessing", "yuna_anima", "yuna_ultima", "yuna_calm_prayer"],
+    skillIds: ["yuna_cure", "yuna_esuna", "yuna_valefor", "yuna_pray", "yuna_ixion", "yuna_holy", "yuna_blessing", "yuna_anima", "yuna_ultima", "yuna_calm_prayer", "yuna_otherworld_sending", "yuna_bahamut_ex"],
     passiveEffects: [
       { type: "elementResistance", targets: ["fire", "ice"], value: 10, label: "火・氷耐性強化：自身の火・氷耐性10%アップ" },
       { type: "elementResistance", targets: ["lightning", "wind"], value: 10, label: "雷・風耐性強化：自身の雷・風耐性10%アップ" },
